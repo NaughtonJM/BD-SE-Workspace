@@ -1,0 +1,89 @@
+﻿name: Validate Workspace
+
+on:
+  push:
+    branches:
+      - main
+      - repo-cleanup
+
+  pull_request:
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  validate:
+
+    runs-on: windows-latest
+
+    steps:
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install Dependencies
+        shell: pwsh
+        run: npm.cmd ci
+
+      - name: Syntax Check
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Filter *.js |
+          Where-Object {
+            $_.FullName -notmatch '\\node_modules\\'
+          } |
+          ForEach-Object {
+            node --check $_.FullName
+          }
+
+      - name: Start Workspace
+        shell: pwsh
+        run: |
+          $p = Start-Process node.exe `
+            -ArgumentList "server.js" `
+            -PassThru
+
+          try {
+
+            $healthy = $false
+
+            for ($i = 0; $i -lt 30; $i++) {
+
+              Start-Sleep -Milliseconds 500
+
+              try {
+
+                $h = Invoke-RestMethod `
+                  -Uri "http://127.0.0.1:3000/api/health"
+
+                if ($h.status -eq "running") {
+                  $healthy = $true
+                  break
+                }
+
+              } catch {}
+
+            }
+
+            if (-not $healthy) {
+              throw "Health endpoint never returned running"
+            }
+
+            Invoke-RestMethod `
+              -Uri "http://127.0.0.1:3000/api/v20/health" | Out-Null
+
+          }
+          finally {
+
+            if (-not $p.HasExited) {
+              Stop-Process -Id $p.Id -Force
+            }
+
+          }
