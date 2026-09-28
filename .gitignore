@@ -8,6 +8,8 @@ workspace.db
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
 
 .env
 .env.*
