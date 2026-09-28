@@ -1,14 +1,16 @@
-﻿name: Polaris Coverity Scan
+﻿name: Polaris Scan
 
 on:
 
   push:
     branches:
       - main
+      - repo-cleanup
 
   pull_request:
     branches:
       - main
+      - repo-cleanup
 
   workflow_dispatch:
 
