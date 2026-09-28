@@ -1,0 +1,410 @@
+﻿<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Black Duck Sales Engineer Workspace</title><style>
+:root{--bg:#10051e;--panel:#241038;--purple:#572681;--purple2:#351057;--gold:#fcaf1a;--line:#654184;--muted:#cdbddd;--green:#24754b;--red:#812b43}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 88% 0,#572681 0,transparent 32%),linear-gradient(145deg,#11051f,#210936 66%,#10051e);font-family:Segoe UI,Arial;color:white;min-height:100vh}.shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}.side{position:sticky;top:0;height:100vh;background:#150722;border-right:1px solid var(--line);padding:22px 14px}.brand{font-size:24px;font-weight:900;letter-spacing:2px;margin:0 8px 4px}.brand b{color:#c7a7db}.sub,.muted{font-size:12px;color:var(--muted)}.sub{margin:0 8px 24px}.nav button{width:100%;text-align:left;color:#fff;border:1px solid transparent;background:transparent;border-radius:8px;padding:11px;margin:3px 0;cursor:pointer;font-weight:650}.nav button:hover,.nav button.active{background:var(--purple2);border-color:#9a73b3}.main{padding:22px;max-width:1600px;width:100%}.view{display:none}.view.active{display:block}.hero,.panel,.record,.launch{border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:18px;background:linear-gradient(115deg,#351057dd,#1c0a2dee);margin-bottom:16px;box-shadow:0 10px 26px #0005}.hero h1,.record h3,.launch h3{margin-top:0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.launch{cursor:pointer;transition:.15s}.launch:hover{transform:translateY(-2px);border-color:var(--gold)}button,.btn{display:inline-block;color:#fff;text-decoration:none;border:1px solid #9a73b3;border-radius:7px;padding:9px 11px;margin:3px;background:#2a0c43;cursor:pointer;font-weight:650}.primary{background:var(--gold);color:#210936;border-color:var(--gold)}.danger{background:var(--red)}input,select,textarea{width:100%;background:#180825;color:#fff;border:1px solid #9a73b3;border-radius:6px;padding:9px;font:inherit}.field{margin-bottom:10px}.field label{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.toolbar{display:flex;gap:6px;flex-wrap:wrap}.pill{display:inline-block;padding:5px 9px;border-radius:18px;background:var(--purple);margin:2px;font-size:11px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}table{width:100%;border-collapse:collapse;min-width:1200px;background:#210d34}th{position:sticky;top:0;background:#572681;text-align:left;font-size:11px;padding:11px;border-bottom:2px solid var(--gold)}td{vertical-align:top;padding:11px;border-top:1px solid #55366e;font-size:12px}.asset{display:flex;gap:12px;justify-content:space-between;align-items:start}.asset video{max-width:320px;width:100%}.hidden{display:none}.empty{text-align:center;color:var(--muted);padding:22px}@media(max-width:950px){.shell{grid-template-columns:1fr}.side{position:static;height:auto}.nav{display:flex;flex-wrap:wrap}.nav button{width:auto}.grid,.grid2{grid-template-columns:1fr}}
+</style></head><body><div class="shell"><aside class="side"><div class="brand">BLACK <b>DUCK</b></div><div class="sub">Sales Engineer Workspace V2</div><nav class="nav" id="nav"></nav></aside><main class="main">
+<section id="dashboard" class="view"><div class="hero"><h1>Sales Engineer Workspace</h1><p>Prepare partner calls, explore capabilities, organize demo assets, and launch enablement resources from one place.</p></div><div class="grid"><div class="launch" onclick="route('callprep')"><h3>AI Partner Call Prep</h3><p>Generate a timed call script, discovery paths, objections, and next steps.</p><button class="primary">Prepare a Call</button></div><div class="launch" onclick="route('capabilities')"><h3>Capability Explorer</h3><p>Search Black Duck capabilities, value, discovery questions, and elevator QID.</p><button>Explore Capabilities</button></div><div class="launch" onclick="route('products')"><h3>Product Workspaces</h3><p>View product positioning alongside its related uploaded assets and links.</p><button>Open Products</button></div><div class="launch" onclick="route('assets')"><h3>Demo Center</h3><p>Upload and organize feature clips, demo videos, decks, scripts, screenshots, and battlecards.</p><button>Open Demo Center</button></div><div class="launch" onclick="route('resources')"><h3>Highspot and Resources</h3><p>Maintain exact links to Highspot, partner portals, documentation, labs, and internal tools.</p><button>Open Resources</button></div><div class="launch" onclick="route('history')"><h3>Call Prep History</h3><p>Reopen saved AI-generated partner call preparations, including existing records.</p><button>View History</button></div></div></section>
+<section id="callprep" class="view"><div class="hero"><h1>AI Partner Discovery Call Prep</h1><p>Turn partner and customer context into a focused call script grounded in the capability matrix.</p></div><div class="grid2"><div class="panel"><h2>Meeting input</h2><div class="field"><label>Partner name *</label><input id="cpPartner" placeholder="GDIT"></div><div class="field"><label>Customer / agency</label><input id="cpAccount" placeholder="Optional customer or agency"></div><div class="field"><label>Meeting objective</label><textarea id="cpObjective" rows="3"></textarea></div><div class="field"><label>Attendees and roles</label><textarea id="cpAttendees" rows="3"></textarea></div><div class="field"><label>Known context and evidence</label><textarea id="cpContext" rows="7"></textarea></div><div class="field"><label>Deployment / compliance constraints</label><textarea id="cpConstraints" rows="3"></textarea></div><div class="field"><label>Call duration</label><select id="cpDuration"><option value="30">30 minutes</option><option value="45" selected>45 minutes</option><option value="60">60 minutes</option></select></div><button class="primary" id="cpGenerate" onclick="generateCallPrep()">Generate Call Script</button><button onclick="route('history')">History</button></div><div class="panel"><h2>Prepared call</h2><div id="cpStatus" class="muted">Enter meeting context and generate a script.</div><div id="cpDownloads"></div><div id="cpResult"></div></div></div></section>
+<section id="history" class="view"><div class="hero"><h1>Call Prep History</h1><p>Saved AI-generated partner call scripts stored in SQLite.</p><button onclick="loadCallPrepHistory()">Refresh</button></div><div id="historyView"></div></section>
+<section id="capabilities" class="view"><div class="hero"><h1>AppSec Capability Explorer</h1><p>Positioning, value, discovery questions, and elevator QID.</p></div><div class="field"><input id="capFilter" placeholder="Search capability or product" oninput="renderCapabilities()"></div><div class="tablewrap"><table><thead><tr><th>Capability</th><th>Product</th><th>What It Does</th><th>Business Value</th><th>Discovery Questions</th><th>Elevator QID</th></tr></thead><tbody id="capBody"></tbody></table></div></section>
+<section id="products" class="view"><div class="hero"><h1>Product Workspaces</h1><p>Capabilities, discovery motions, local demo assets, presentations, and exact resource links by product.</p></div><div id="productView" class="grid"></div><div id="productDetail"></div></section>
+<section id="assets" class="view"><div class="hero"><h1>Demo and Presentation Center</h1><p>Upload feature clips, demo videos, decks, scripts, screenshots, battlecards, and documentation. Files remain on this workstation.</p></div><div class="grid2"><form id="assetForm" class="panel"><h2>Add Asset</h2><div class="field"><label>Product</label><select id="aProduct" name="product"></select></div><div class="field"><label>Title</label><input name="title" required></div><div class="field"><label>Type</label><select name="asset_type"><option>demo video</option><option>feature clip</option><option>presentation</option><option>demo script</option><option>screenshot</option><option>battlecard</option><option>documentation</option></select></div><div class="field"><label>Audience</label><input name="audience" placeholder="Partner, customer, executive, developer"></div><div class="field"><label>Description</label><textarea name="description" rows="4"></textarea></div><div class="field"><label>Tags</label><input name="tags"></div><div class="field"><label>File</label><input name="file" type="file" required></div><button class="primary" type="submit">Upload Asset</button><div id="assetStatus" class="muted"></div></form><div class="panel"><h2>Filter Library</h2><div class="field"><label>Search</label><input id="assetSearch" oninput="renderAssets()"></div><div class="field"><label>Product</label><select id="assetProductFilter" onchange="renderAssets()"></select></div></div></div><div id="assetView"></div></section>
+<section id="resources" class="view"><div class="hero"><h1>Highspot and Internal Resources</h1><p>Store exact links rather than duplicating governed enablement content.</p></div><div class="grid2"><form id="resourceForm" class="panel"><h2>Add Link</h2><div class="field"><label>Title</label><input name="title" required placeholder="Polaris Partner Deck"></div><div class="field"><label>Category</label><select name="category"><option>Highspot</option><option>Documentation</option><option>Partner Portal</option><option>Lab</option><option>AI Tools</option><option>Community</option><option>Other</option></select></div><div class="field"><label>Product</label><select id="rProduct" name="product"></select></div><div class="field"><label>Full URL</label><input name="url" type="url" required></div><div class="field"><label>Description</label><textarea name="description" rows="3"></textarea></div><button class="primary" type="submit">Save Link</button><div id="resourceStatus" class="muted"></div></form><div class="panel"><h2>How to use this area</h2><p>Add the exact Highspot URLs you use for customer decks, partner decks, demo videos, battlecards, and technical enablement. Links remain editable and are grouped by category and product.</p></div></div><div id="resourceView"></div></section>
+<section id="admin" class="view"><div class="hero"><h1>Administration</h1><p>Local paths and service status.</p></div><div class="grid"><div class="record"><h3>SQLite</h3><p class="muted">%USERPROFILE%\BlackDuckSEWorkspace\database\workspace.db</p></div><div class="record"><h3>Asset Storage</h3><p class="muted">%USERPROFILE%\BlackDuckSEWorkspace\assets</p></div><div class="record"><h3>AI Configuration</h3><p class="muted">Server reads BLACKDUCK_LLM_API_KEY and BLACKDUCK_LLM_MODEL from User environment variables.</p></div></div></section>
+</main></div><script>
+const CAPS=[{"capability": "Software Composition Analysis (SCA)", "product": "Black Duck SCA", "does": "Identifies open source components, vulnerabilities, licenses, containers, and generates SBOMs. Continuously monitors newly disclosed vulnerabilities.", "value": "Reduces software supply chain risk, supports compliance initiatives, and improves vulnerability prioritization.", "questions": ["How do you know what's actually inside every application you deploy?", "If a critical CVE was announced today, how quickly could you identify impacted applications?", "How are you managing AI-generated code and its open source dependencies?"], "qid": {"q": "How do you know what's inside the software you ship?", "i": "Unknown components create security, compliance, and mission risk.", "d": "How are you building and validating SBOMs today?"}}, {"capability": "Binary Analysis", "product": "BDBA", "does": "Analyzes binaries, firmware, containers, and third-party software without source code.", "value": "Provides visibility into vendor, contractor, and acquired software where source isn't available.", "questions": ["How do you assess software delivered by contractors or vendors?", "Can you inspect third-party applications without source code?", "How do you validate software entering the environment today?"], "qid": {"q": "How do you assess software when source code isn't available?", "i": "Trusting software you cannot inspect introduces supply-chain risk.", "d": "How frequently do you evaluate vendor-provided software?"}}, {"capability": "Static Application Security Testing (SAST)", "product": "Coverity", "does": "Finds security vulnerabilities and quality defects in source code during development. Supports many programming languages.", "value": "Finds vulnerabilities earlier when remediation costs are lowest.", "questions": ["When are security defects typically discovered?", "How often are vulnerabilities discovered after code reaches QA?", "Which teams generate the most findings?"], "qid": {"q": "How early are security defects being found?", "i": "Defects found later are more expensive to fix.", "d": "How much rework results from vulnerabilities found after integration?"}}, {"capability": "Integrated AppSec Platform", "product": "Polaris", "does": "Cloud platform that unifies multiple Black Duck analysis engines across the SDLC.", "value": "Consolidates AppSec tools, workflows, reporting, and governance into one platform.", "questions": ["How many AppSec tools are you managing today?", "Do development and security teams use the same risk view?", "How are findings prioritized across applications?"], "qid": {"q": "How many systems must teams access to understand software risk?", "i": "Disconnected tools create operational friction and inconsistent governance.", "d": "What would change if policy, reporting, and testing lived in a single platform?"}}, {"capability": "Interactive Application Security Testing (IAST)", "product": "Seeker", "does": "Observes applications at runtime and tracks actual data flows during testing.", "value": "Provides highly actionable findings with runtime context and fewer false positives.", "questions": ["Do developers struggle to reproduce findings?", "How much time is spent validating whether vulnerabilities are exploitable?", "Can you see how user input flows through applications today?"], "qid": {"q": "How much effort is spent proving findings are real?", "i": "Teams lose valuable engineering time chasing false positives.", "d": "What percentage of findings require manual validation?"}}, {"capability": "Dynamic Application Security Testing (DAST)", "product": "Continuous Dynamic", "does": "Scans running web applications and APIs to identify exploitable vulnerabilities.", "value": "Confirms whether vulnerabilities are exposed in operational environments.", "questions": ["How do you test running applications today?", "How often are internet-facing applications assessed?", "Can security test applications without involving development teams?"], "qid": {"q": "How do you know deployed applications are secure?", "i": "Code can pass reviews but remain exploitable in production.", "d": "How frequently are staging and production environments tested?"}}, {"capability": "Fuzz Testing", "product": "Defensics", "does": "Automated protocol, API, and robustness testing using malformed and unexpected inputs.", "value": "Discovers unknown vulnerabilities before attackers find them.", "questions": ["How do you test malformed or unexpected inputs?", "How do you validate protocol implementations?", "Are you responsible for APIs, embedded systems, or connected devices?"], "qid": {"q": "How do you know systems behave safely under unexpected conditions?", "i": "Serious failures can occur through edge cases traditional testing misses.", "d": "What negative testing occurs before release?"}}, {"capability": "Application Security Posture Management (ASPM)", "product": "Software Risk Manager", "does": "Aggregates AppSec findings from multiple tools into a unified risk posture view.", "value": "Enables executive-level software risk decisions and governance.", "questions": ["How many security tools produce findings today?", "How do executives measure application risk?", "Can you correlate findings across solutions?"], "qid": {"q": "How many places do you look to understand application risk?", "i": "More tools can create more data but less visibility.", "d": "How are risk decisions made when findings exist in multiple systems?"}}, {"capability": "Developer Enablement", "product": "Code Sight", "does": "IDE plugin that brings SAST and SCA results directly to developers.", "value": "Shifts security left and reduces remediation costs.", "questions": ["When do developers receive security feedback?", "Are developers surprised by findings later in the pipeline?", "Would developers benefit from security guidance during coding?"], "qid": {"q": "How quickly can developers discover they've introduced risk?", "i": "Delayed feedback increases cost and slows releases.", "d": "What is the average time between coding and first security feedback?"}}, {"capability": "AI-Powered AppSec", "product": "Signal", "does": "AI-focused application security platform and agentic security assistance.", "value": "Helps organizations secure and govern AI-assisted development.", "questions": ["Are developers leveraging AI coding assistants?", "How is AI-generated code reviewed today?", "What controls exist around AI-produced software?"], "qid": {"q": "How are you governing AI-generated software?", "i": "Development velocity is accelerating faster than security review capacity.", "d": "How are AI-generated code changes validated before deployment?"}}];
+const PRODUCTS=[...new Set(CAPS.map(x=>x.product))].sort();
+const VIEWS=[["dashboard","Dashboard"],["callprep","AI Call Prep"],["history","Call Prep History"],["capabilities","Capability Explorer"],["products","Product Workspaces"],["assets","Demo Center"],["resources","Highspot and Resources"],["admin","Administration"]];
+let ASSETS=[],RESOURCES=[];
+function esc(s){return String(s??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"','&quot;')}
+function route(id){document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active',x.dataset.id===id));location.hash=id;if(id==='history')loadCallPrepHistory();if(id==='capabilities')renderCapabilities();if(id==='products')renderProducts();if(id==='assets')loadAssets();if(id==='resources')loadResources()}
+function init(){nav.innerHTML=VIEWS.map(v=>`<button data-id="${v[0]}" onclick="route('${v[0]}')">${v[1]}</button>`).join('');const opts=['','General',...PRODUCTS].map(x=>`<option value="${esc(x)}">${esc(x||'All products')}</option>`).join('');aProduct.innerHTML=['General',...PRODUCTS].map(x=>`<option>${esc(x)}</option>`).join('');rProduct.innerHTML=opts;assetProductFilter.innerHTML=opts;assetForm.onsubmit=uploadAsset;resourceForm.onsubmit=saveResource;route(location.hash.slice(1)||'dashboard')}
+function renderCapabilities(){const q=(capFilter.value||'').toLowerCase();capBody.innerHTML=CAPS.filter(c=>JSON.stringify(c).toLowerCase().includes(q)).map(c=>`<tr><td><b>${esc(c.capability)}</b></td><td><span class="pill">${esc(c.product)}</span></td><td>${esc(c.does)}</td><td>${esc(c.value)}</td><td>${(c.questions||[]).map(x=>`<div>${esc(x)}</div>`).join('')}</td><td><b>Q:</b> ${esc(c.qid?.q)}<br><b>I:</b> ${esc(c.qid?.i)}<br><b>D:</b> ${esc(c.qid?.d)}</td></tr>`).join('')}
+function renderProducts(){productView.innerHTML=PRODUCTS.map(p=>{const n=CAPS.filter(c=>c.product===p).length,a=ASSETS.filter(x=>x.product===p).length,r=RESOURCES.filter(x=>x.product===p).length;return `<div class="launch" onclick="openProduct('${esc(p)}')"><h3>${esc(p)}</h3><p>${n} mapped capability record(s)</p><span class="pill">${a} local assets</span><span class="pill">${r} resource links</span></div>`}).join('')}
+async function openProduct(p){await Promise.all([loadAssets(false),loadResources(false)]);const caps=CAPS.filter(c=>c.product===p),assets=ASSETS.filter(x=>x.product===p),links=RESOURCES.filter(x=>x.product===p);productDetail.innerHTML=`<div class="hero"><h1>${esc(p)}</h1><button onclick="route('assets');assetProductFilter.value='${esc(p)}';renderAssets()">Assets</button><button onclick="route('resources')">Resources</button></div><div class="grid2"><div class="panel"><h2>Capabilities and discovery</h2>${caps.map(c=>`<div class="record"><h3>${esc(c.capability)}</h3><p>${esc(c.value)}</p>${(c.questions||[]).map(q=>`<div>${esc(q)}</div>`).join('')}</div>`).join('')||'<p>No dedicated rows.</p>'}</div><div class="panel"><h2>Assets and links</h2>${assets.map(assetCard).join('')||'<p class="muted">No local assets.</p>'}${links.map(resourceCard).join('')||'<p class="muted">No resource links.</p>'}</div></div>`;productDetail.scrollIntoView({behavior:'smooth'})}
+function cpList(a){return `<ul>${(a||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`}
+function renderCallPrep(r,target=cpResult){const agenda=(r.agenda||[]).map(x=>`<div class="record"><h3>${esc(x.minutes)} | ${esc(x.topic)}</h3><p>${esc(x.talk_track)}</p>${cpList(x.questions)}</div>`).join('');const paths=(r.discovery_paths||[]).map(x=>`<div class="record"><h3>${esc(x.capability)}</h3><span class="pill">${(x.products||[]).map(esc).join(' | ')}</span><p><b>Listen for:</b> ${esc(x.customer_signal)}</p>${cpList(x.questions)}<p><b>Why it matters:</b> ${esc(x.why_it_matters)}</p></div>`).join('');target.innerHTML=`<div class="record"><h2>${esc(r.title)}</h2><p><b>Meeting thesis:</b> ${esc(r.meeting_thesis)}</p><h3>Desired outcomes</h3>${cpList(r.desired_outcomes)}<h3>Opening talk track</h3><p>${esc(r.opening_talk_track)}</p></div><h2>Timed agenda</h2>${agenda}<h2>Discovery paths</h2>${paths}<h2>Partner value hypotheses</h2>${cpList((r.partner_value_hypotheses||[]).map(x=>x.hypothesis+' | Validate: '+x.validation_question))}<h2>Likely objections</h2>${(r.likely_objections||[]).map(x=>`<div class="record"><b>${esc(x.objection)}</b><p>${esc(x.response)}</p></div>`).join('')}<div class="record"><h2>Recommended next step</h2><p>${esc(r.recommended_next_step)}</p><h3>Facts to verify</h3>${cpList(r.facts_to_verify)}<h3>Facilitator notes</h3>${cpList(r.facilitator_notes)}</div>`}
+async function legacyV2GenerateCallPrep(){cpGenerate.disabled=true;cpStatus.textContent='Generating call preparation...';cpResult.innerHTML='';const body={partner_name:cpPartner.value.trim(),account_name:cpAccount.value.trim(),meeting_objective:cpObjective.value.trim(),attendees:cpAttendees.value.trim(),known_context:cpContext.value.trim(),research_prompt:cpResearchPrompt.value.trim(),requested_outputs:cpCreateFiles.checked?['call_script','strategic_account_plan','executive_partner_strategy']:['call_script'],constraints:cpConstraints.value.trim(),duration_minutes:Number(cpDuration.value),presenter:'Justin Naughton',meeting_type:'Public-sector partner discovery'};try{const r=await fetch('/api/call-prep/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error+(d.details?': '+d.details:''));cpStatus.textContent=`Generated with ${d.model} and saved as result ${d.id}.`;renderCallPrep(d.result)}catch(e){cpStatus.textContent='Generation failed: '+e.message}finally{cpGenerate.disabled=false}}
+async function legacyV2LoadCallPrepHistory(){historyView.innerHTML='<p>Loading...</p>';const r=await fetch('/api/call-prep/history');const d=await r.json();historyView.innerHTML=(d||[]).map(x=>`<div class="record"><h3>${esc(x.partner_name)}${x.account_name?' | '+esc(x.account_name):''}</h3><p class="muted">${esc(x.created_date)} | ${esc(x.model)}</p><button class="primary" onclick='openHistory(${JSON.stringify(x.result).replaceAll("'","&#39;")})'>Open</button></div>`).join('')||'<div class="empty">No saved call preparations.</div>'}
+function openHistory(result){route('callprep');renderCallPrep(result);cpStatus.textContent='Loaded from saved history.'}
+function isVideo(a){return /\.(mp4|mov|webm|m4v)$/i.test(a.filename)}
+function assetCard(a){const url='/assets/'+a.stored_path.split('/').map(encodeURIComponent).join('/');return `<div class="record asset"><div><h3>${esc(a.title)}</h3><span class="pill">${esc(a.product)}</span><span class="pill">${esc(a.asset_type)}</span><p>${esc(a.description)}</p><p class="muted">${esc(a.audience)} | ${esc(a.tags)}</p><a class="btn" href="${url}" target="_blank">Open</a><button class="danger" onclick="deleteAsset(${a.id})">Delete</button></div>${isVideo(a)?`<video controls src="${url}"></video>`:''}</div>`}
+async function loadAssets(render=true){ASSETS=await (await fetch('/api/se-assets')).json();if(render)renderAssets();renderProducts()}
+function renderAssets(){const q=(assetSearch.value||'').toLowerCase(),p=assetProductFilter.value;assetView.innerHTML=ASSETS.filter(a=>(!p||a.product===p)&&JSON.stringify(a).toLowerCase().includes(q)).map(assetCard).join('')||'<div class="empty">No matching assets.</div>'}
+async function uploadAsset(e){e.preventDefault();assetStatus.textContent='Uploading...';const r=await fetch('/api/se-assets',{method:'POST',body:new FormData(assetForm)});const d=await r.json();assetStatus.textContent=r.ok?'Upload complete.':d.error;if(r.ok){assetForm.reset();await loadAssets()}}
+async function deleteAsset(id){if(confirm('Delete this asset and its local file?')){await fetch('/api/se-assets/'+id,{method:'DELETE'});await loadAssets()}}
+function resourceCard(x){return `<div class="record"><h3>${esc(x.title)}</h3><span class="pill">${esc(x.category)}</span>${x.product?`<span class="pill">${esc(x.product)}</span>`:''}<p>${esc(x.description)}</p><a class="btn primary" href="${esc(x.url)}" target="_blank" rel="noopener">Open Resource</a><button class="danger" onclick="deleteResource(${x.id})">Delete</button></div>`}
+async function loadResources(render=true){RESOURCES=await (await fetch('/api/se-resources')).json();if(render)resourceView.innerHTML=RESOURCES.map(resourceCard).join('')||'<div class="empty">No resource links.</div>';renderProducts()}
+async function saveResource(e){e.preventDefault();resourceStatus.textContent='Saving...';const body=Object.fromEntries(new FormData(resourceForm));const r=await fetch('/api/se-resources',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();resourceStatus.textContent=r.ok?'Link saved.':d.error;if(r.ok){resourceForm.reset();await loadResources()}}
+async function deleteResource(id){if(confirm('Delete this resource link?')){await fetch('/api/se-resources/'+id,{method:'DELETE'});await loadResources()}}
+Promise.all([loadAssets(false),loadResources(false)]).finally(init);
+async function createResearchFiles(callPrepId,result,partner){
+  cpDownloads.innerHTML='<div class="record"><b>Creating Word report and PowerPoint...</b></div>';
+  try{
+    const r=await fetch('/api/research-exports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({call_prep_id:callPrepId,partner_name:partner,presenter:'Justin Naughton',result})});
+    const d=await r.json(); if(!r.ok)throw new Error(d.error||'File generation failed');
+    cpDownloads.innerHTML=`<div class="record"><h3>Generated deliverables</h3><a class="btn primary" href="${d.report_url}" download>Download Word Account Plan</a><a class="btn primary" href="${d.deck_url}" download>Download Executive PowerPoint</a><p class="muted">${esc(d.report_name)}<br>${esc(d.deck_name)}</p></div>`;
+  }catch(e){cpDownloads.innerHTML=`<div class="record"><b>Deliverable generation failed:</b> ${esc(e.message)}</div>`}
+}
+async function loadResearchExports(){
+  const r=await fetch('/api/research-exports');const d=await r.json();return d;
+}/* V18_CLEAN_REBUILD */
+(function(){
+ const css=document.createElement('style');css.textContent=`
+ html{font-size:16px}body,button,.btn,input,select,textarea,table,th,td,.muted,.sub{font-size:12pt!important;line-height:1.55}h1{font-size:28pt!important}h2{font-size:20pt!important}h3{font-size:15pt!important}.main{max-width:1700px}.v18-page{display:grid;gap:16px}.v18-box{border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:18px;background:linear-gradient(115deg,#351057dd,#1c0a2dee)}.v18-hero{border-left-width:7px}.v18-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.v18-meta>div,.v18-card{border:1px solid var(--line);border-radius:9px;padding:12px;background:#180825}.v18-label{font-weight:800;color:var(--gold);margin-bottom:6px}.v18-rich p{margin:0 0 13px}.v18-rich ul{padding-left:28px}.v18-topic{display:block;font-size:14pt;font-weight:900;color:#fff;margin:18px 0 7px}.v18-agenda{width:100%;min-width:0;border-collapse:collapse}.v18-agenda th,.v18-agenda td{position:static;border:1px solid #654184;padding:12px;vertical-align:top}.v18-agenda th{background:#572681}.v18-script{font-size:13pt!important;line-height:1.65;background:#180825;border-left:4px solid #00a6a6;border-radius:8px;padding:13px}.v18-stack{display:block!important;width:100%}.v18-path{display:block;width:100%;border:1px solid #654184;border-top:4px solid var(--gold);border-radius:10px;padding:15px;background:#180825;margin:12px 0}.v18-history{width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden}.v18-head,.v18-row{display:grid;grid-template-columns:minmax(230px,1.1fr) 170px minmax(500px,2.2fr) minmax(220px,1fr);gap:12px;align-items:center;padding:13px 15px}.v18-head{background:#572681;border-bottom:2px solid var(--gold);font-weight:800}.v18-row{border-top:1px solid #55366e;background:#210d34}.v18-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}.v18-actions button{width:100%;margin:0;min-height:44px}.v18-files{display:grid;grid-template-columns:1fr 1fr;gap:7px}.v18-files button{width:100%;margin:0}.v18-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.v18-tabs button.active{background:var(--gold);color:#210936}.v18-pane{display:none}.v18-pane.active{display:block}.v18-prose{border:1px solid #654184;border-radius:10px;padding:15px;margin:11px 0;background:#180825}.v18-prose h3{margin:0 0 9px}.v18-prose p{margin:0 0 11px}.v18-prose strong{color:var(--gold)}.v18-stagebar{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}.v18-stage{border:1px solid #654184;border-radius:9px;padding:9px;background:#180825;text-align:center}.v18-stage.active{background:var(--gold);color:#210936}.v18-stage b{display:block;font-size:16pt}.v18-med{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.v18-question{border:1px solid #654184;border-radius:9px;padding:13px;margin:10px 0;background:#160720}.v18-answer{display:grid;grid-template-columns:2fr 1fr 145px 105px;gap:8px;align-items:end}.v18-answer textarea{min-height:78px}.v18-editor{border:1px solid #654184;border-radius:10px;padding:13px;margin:12px 0;background:#180825}.v18-editor input{font-weight:800}.v18-editor textarea{min-height:145px}.v18-qid{border:1px solid #654184;border-top:5px solid var(--gold);border-radius:11px;padding:15px;margin:12px 0;background:#180825}.v18-qid-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.v18-pipeline{display:grid;grid-template-columns:60px 1fr 1.4fr 1fr;gap:12px;padding:15px 0;border-top:1px solid var(--line)}.v18-num{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--gold);color:#210936;font-weight:900}.v18-error{border:1px solid #b54b65;border-left:5px solid #e45c78;border-radius:12px;padding:16px;background:#351020}.v18-toolbar{display:flex;gap:8px;flex-wrap:wrap}.v18-status{color:var(--muted);margin:8px 0}.v18-download{border-top:4px solid var(--gold)}
+ @media(max-width:1180px){.v18-head,.v18-row{grid-template-columns:1fr 1fr}.v18-actions,.v18-meta,.v18-med,.v18-qid-grid{grid-template-columns:1fr 1fr}.v18-stagebar{grid-template-columns:repeat(2,1fr)}.v18-pipeline{grid-template-columns:1fr}}@media(max-width:700px){.v18-head{display:none}.v18-row,.v18-actions,.v18-files,.v18-meta,.v18-med,.v18-qid-grid,.v18-answer{grid-template-columns:1fr}}
+ `;document.head.appendChild(css);
+ const main=document.querySelector('main.main')||document.querySelector('main');
+ for(const [id,title,desc] of [['meetingplan','Meeting Plan','Review the agenda, script, discovery strategy, MEDDPICC, and next step.'],['meetingexecution','Meeting Execution','Run the generated script, shuffle stage-aware questions, and capture answers.'],['researchreport','Partner Research and Call Synthesis Report','Human-readable partner research, prospective-client research, reconciliation, call synthesis, and pipeline evidence.'],['queryaudit','Raw Audit','Exact prompts, inputs, and structured data returned.']]){if(!document.getElementById(id)){const s=document.createElement('section');s.id=id;s.className='view';s.innerHTML=`<div class="hero"><h1>${title}</h1><p>${desc}</p><button onclick="route('history')">Back to History</button></div><div id="${id}View"></div>`;main.appendChild(s)}}
+})();
+const V18_STAGES=[['1','Intro and Alignment'],['2','Business Discovery'],['3','Technical Discovery'],['4','Demonstration Planning'],['5','Proof of Value or Evaluation'],['6','Proposal and Procurement'],['7','Close and Expansion']];
+function v18Timeout(url,options={},ms=12000){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);return fetch(url,{...options,signal:c.signal}).finally(()=>clearTimeout(t))}
+function v18Label(s){return String(s||'').replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase())}
+function v18Decode(v){const t=document.createElement('textarea');t.innerHTML=String(v??'');return t.value}
+function v18Plain(v){return v18Decode(String(v??'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/(p|div|li|h[1-6]|tr)>/gi,'\n').replace(/<li[^>]*>/gi,'• ').replace(/<h[1-6][^>]*>/gi,'\n## ').replace(/<strong[^>]*>/gi,'**').replace(/<\/strong>/gi,'**').replace(/<[^>]+>/g,'')).replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n[ \t]+/g,'\n').replace(/\n{3,}/g,'\n\n').trim()}
+function v18Rich(v){if(v==null||v==='')return'<span class="muted">Not supplied</span>';if(Array.isArray(v))return `<ul>${v.filter(Boolean).map(x=>`<li>${typeof x==='object'?v18Object(x):v18Rich(x)}</li>`).join('')}</ul>`;if(typeof v==='object')return v18Object(v);const lines=v18Plain(v).split('\n');let out='',p=[],b=[];const fp=()=>{if(p.length){out+=`<p>${esc(p.join(' '))}</p>`;p=[]}},fb=()=>{if(b.length){out+=`<ul>${b.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`;b=[]}};for(const raw of lines){const x=raw.trim();if(!x){fp();fb();continue}const clean=x.replace(/^#+\s*/,'').replace(/^\*\*|\*\*$/g,'');const header=/^#{1,3}\s/.test(x)||/^\*\*.*\*\*$/.test(x)||(/:$/.test(clean)&&clean.length<110)||/^(core context|recommended technical answers.*|tunneling.*|shared-services.*|presentation guidance|people.*support|logistics.*next steps|action items.*|bottom-line.*)$/i.test(clean);if(header){fp();fb();out+=`<strong class="v18-topic">${esc(clean.replace(/:$/,''))}</strong>`}else if(/^(•|-|\*)\s+/.test(x)){fp();b.push(x.replace(/^(•|-|\*)\s+/,''))}else{fb();const m=x.match(/^([^:]{2,55}):\s+(.+)$/);if(m){fp();out+=`<p><strong>${esc(m[1])}:</strong> ${esc(m[2])}</p>`}else p.push(x.replace(/\*\*/g,''))}}fp();fb();return `<div class="v18-rich">${out}</div>`}
+function v18Object(o){return Object.entries(o||{}).filter(([k,v])=>v!=null&&v!==''&&k!=='meeting_plan'&&k!=='__meeting_plan_provenance'&&!(Array.isArray(v)&&!v.length)).map(([k,v])=>`<p><strong>${esc(v18Label(k))}:</strong> ${v18Rich(v)}</p>`).join('')}
+function v18Mins(v){const s=String(v||'').replace(/\s*min(?:ute)?s?\s*$/i,'').trim();return s?`${s} mins`:''}
+function v18Hero(x){const i=x.input||{},c=x.prepared_call||{};return `<div class="v18-box v18-hero"><h1>${esc(c.title||`${x.partner_name} | ${x.account_name}`)}</h1>${v18Rich(c.meeting_thesis)}<div class="v18-meta"><div><div class="v18-label">Partner</div>${esc(x.partner_name||'')}</div><div><div class="v18-label">Prospective Client</div>${esc(x.account_name||'')}</div><div><div class="v18-label">Meeting Objective</div>${esc(i.meeting_objective||'')}</div><div><div class="v18-label">Duration</div>${esc(i.duration_minutes||45)} minutes</div></div></div>`}
+function v18Stage(c){const s=c?.sales_stage||{},n=Number(s.number||1);return `<div class="v18-box"><h2>Numbered Sales Stage</h2><div class="v18-stagebar">${V18_STAGES.map(([x,name])=>`<div class="v18-stage ${Number(x)===n?'active':''}"><b>${x}</b>${name}</div>`).join('')}</div><p><strong>Current Stage ${n}: ${esc(s.name||V18_STAGES[n-1]?.[1]||'Intro and Alignment')}</strong></p>${v18Rich(s.rationale)}<p><strong>Exit Criteria</strong></p>${v18Rich(s.exit_criteria||[])}</div>`}
+function v18Agenda(c){return `<div class="v18-box"><h2>Meeting Agenda and Presenter Script</h2><table class="v18-agenda"><thead><tr><th>Time</th><th>Topic</th><th>Presenter Script</th></tr></thead><tbody><tr><td>Opening</td><td><strong>Executive Opening</strong></td><td><div class="v18-script">${v18Rich(c.opening_talk_track||'Script not generated.')}</div></td></tr>${(c.agenda||[]).map(a=>`<tr><td>${esc(v18Mins(a.minutes||a.time))}</td><td><strong>${esc(a.topic||'')}</strong></td><td><div class="v18-script">${v18Rich(a.talk_track||a.output||'Script not generated.')}</div></td></tr>`).join('')}</tbody></table><p class="muted">Questions appear only in Meeting Execution.</p></div>`}
+function v18Discovery(c,withQuestions,saved){const mode=c.discovery_coverage_mode||'Focused or legacy',paths=c.discovery_paths||[];return `<div class="v18-box v18-stack"><h2>Solution Discovery Framework</h2><p><strong>Coverage:</strong> ${esc(mode)}</p><p><strong>Sequence:</strong> Outcome → Workload and access → Testing perspective → Depth and timing → Deployment boundary → Governance → Primary, complementary, alternative, and excluded solutions.</p>${paths.map((d,i)=>`<section class="v18-path"><div class="v18-label">${esc(d.phase||`Path ${i+1}`)}</div><h3>${esc(d.objective||d.capability||'Discovery Path')}</h3>${v18Object({stage_objective:d.stage_objective,primary_product:d.primary_product||(d.products||[])[0]||'To qualify',relationship_type:d.relationship_type,complementary_products:d.complementary_products||[],overlapping_alternatives:d.overlapping_alternatives||[],qualifying_signal:d.customer_signal,disqualifying_signal:d.disqualifying_signal,next_validation_question:d.next_validation_question||d.follow_up_if_yes})}${withQuestions?(d.questions||[]).map(q=>v18Question('Discovery: '+(d.capability||d.objective||''),q,saved)).join(''):''}</section>`).join('')||'<p>No discovery paths returned.</p>'}${mode==='Full portfolio'?'<p class="muted">Full-portfolio mode keeps all product families in consideration. Missing product branches indicate incomplete generated output, not an application crash.</p>':''}</div>`}
+function v18Meddpicc(c,withQuestions,saved){const m=c.meddpicc||{},defs=[['metrics','Metrics'],['economic_buyer','Economic Buyer'],['decision_criteria','Decision Criteria'],['decision_process','Decision Process'],['paper_process','Paper Process'],['identify_pain','Identify or Implicate Pain'],['champion','Champion'],['competition','Competition']];return `<div class="v18-box"><h2>MEDDPICC Qualification</h2><div class="v18-med">${defs.map(([k,label])=>{const x=m[k]||{};return `<section class="v18-card"><h3>${label}</h3><span class="pill">${esc(x.status||'Unknown')}</span><p><strong>Known</strong></p>${v18Rich(x.known||'Not established')}<p><strong>Gaps</strong></p>${v18Rich(x.gaps||[])}${withQuestions?(x.questions||[]).map(q=>v18Question('MEDDPICC: '+label,q,saved)).join(''):''}</section>`}).join('')}</div></div>`}
+function v18QKey(section,q){return btoa(unescape(encodeURIComponent(section+'|'+q))).replace(/[^a-zA-Z0-9]/g,'').slice(0,80)}
+function v18Question(section,q,saved){const key=v18QKey(section,q),a=saved.get(key)||{};return `<div class="v18-question" data-key="${key}" data-section="${esc(section)}" data-question="${esc(q)}"><strong>${esc(q)}</strong><div class="v18-answer"><div class="field"><label>Answer</label><textarea class="qa-answer">${esc(a.answer||'')}</textarea></div><div class="field"><label>Notes</label><textarea class="qa-notes">${esc(a.notes||'')}</textarea></div><div class="field"><label>Importance</label><select class="qa-importance"><option ${a.importance==='Low'?'selected':''}>Low</option><option ${!a.importance||a.importance==='Medium'?'selected':''}>Medium</option><option ${a.importance==='High'?'selected':''}>High</option><option ${a.importance==='Critical'?'selected':''}>Critical</option></select></div><label><input class="qa-confirmed" type="checkbox" style="width:auto" ${a.confirmed?'checked':''}> Confirmed</label></div></div>`}
+function v18Qid(c,saved){return `<div class="v18-box"><h2>Adaptive QID Discovery</h2>${(c.data_insight_questions||[]).map(q=>{const question=q.question||(q.questions||[])[0]||'';return `<section class="v18-qid"><div class="v18-label">${esc(q.category||'Research-Informed Discovery')}</div><div class="v18-qid-grid"><div class="v18-card"><strong>Data</strong>${v18Rich(q.data)}</div><div class="v18-card"><strong>Important Event</strong>${v18Rich(q.important_event||'No verified triggering event supplied')}</div><div class="v18-card"><strong>Consequence</strong>${v18Rich(q.outrage_or_consequence||'Must be validated')}</div><div class="v18-card"><strong>Insight</strong>${v18Rich(q.insight)}</div><div class="v18-card"><strong>Why Now</strong>${v18Rich(q.why_now||'Must be validated')}</div><div class="v18-card"><strong>MEDDPICC Elements</strong>${v18Rich(q.meddpicc_elements||[])}</div></div><h3>Spoken Setup</h3><div class="v18-script">${v18Rich(q.setup)}</div>${question?v18Question('QID: '+(q.category||''),question,saved):''}</section>`}).join('')||'<p>No QID setups returned.</p>'}</div>`}
+function v18Prose(title,r){if(!r)return `<div class="v18-box"><h2>${esc(title)}</h2><p>No information stored.</p></div>`;const order=[['Executive Summary','executive_summary'],['Decision','decision'],['Why Now','why_now'],['Partnership Thesis','partnership_thesis'],['Corporate Profile','corporate_profile'],['Challenges','challenges'],['Trends','trends'],['Strategic Vision','strategic_vision'],['Opportunities and Initiatives','opportunities'],['SWOT','swot'],['Value Proposition','value_proposition'],['Partnership Framework','partnership_framework'],['Stakeholders','stakeholders'],['Channel Plan','channel_plan'],['Executive Themes','executive_themes'],['Headwinds and Tailwinds','headwinds_tailwinds'],['Competitive Landscape','competitive_landscape'],['Account Strategy','account_strategy'],['Immediate Actions','immediate_actions'],['Sources','sources'],['Quality Assurance','qa_findings'],['Unresolved Questions','unresolved_questions']];return order.filter(([,k])=>r[k]!=null&&r[k]!==''&&!(Array.isArray(r[k])&&!r[k].length)).map(([label,k])=>`<section class="v18-box"><h2>${label}</h2>${Array.isArray(r[k])?r[k].map((x,i)=>v18ProseItem(x,i)).join(''):typeof r[k]==='object'?v18ProseItem(r[k],0):`<article class="v18-prose">${v18Rich(r[k])}</article>`}</section>`).join('')}
+function v18ProseItem(x,i){if(typeof x!=='object')return `<article class="v18-prose">${v18Rich(x)}</article>`;const title=x.title||x.headline||x.name||x.theme||x.factor||x.pillar||x.element||x.stakeholder||x.capability||x.dimension||x.action||x.development||`Item ${i+1}`,skip=new Set(['title','headline','name','theme','factor','pillar','element','stakeholder','capability','dimension','action','development']);return `<article class="v18-prose"><h3>${esc(title)}</h3>${Object.entries(x).filter(([k,v])=>!skip.has(k)&&v!=null&&v!==''&&!(Array.isArray(v)&&!v.length)).map(([k,v])=>`<p><strong>${esc(v18Label(k))}:</strong> ${v18Rich(v)}</p>`).join('')}</article>`}
+function v18ParseContext(text){const src=v18Plain(text),headers=['Summary Cisa Prep','Core Context','Recommended Technical Answers for the “Outside-In” Constraint','Recommended Technical Answers','Tunneling / Secure Connection Discussion','Shared-Services / Enclave Idea','Presentation Guidance','People / Support','Logistics & Next Steps','Action items implied','Action Items','Bottom-line message the team wants Thundercat to internalize','Bottom-Line Message'];let sections=[],cur={title:'Background',text:[]};for(const raw of src.split('\n')){const line=raw.trim();if(!line||/^Get Outlook for iOS$/i.test(line)||/^Justin Naughton$/i.test(line)||/^[^\s@]+@[^\s@]+$/.test(line))continue;const h=headers.find(x=>line.toLowerCase()===x.toLowerCase()||line.toLowerCase().startsWith(x.toLowerCase()+':'));if(h){if(cur.text.length)sections.push(cur);cur={title:h.replace(/:$/,''),text:[]};const rest=line.slice(h.length).replace(/^:\s*/,'');if(rest)cur.text.push(rest)}else cur.text.push(line)}if(cur.text.length)sections.push(cur);return sections.map((x,i)=>({section_key:'context_'+i,section_title:x.title,section_text:x.text.join('\n'),sort_order:i}))}
+async function v18ContextEditor(x){let sections=[];try{const r=await v18Timeout('/api/v16/'+x.id+'/context');sections=await r.json()}catch{}if(!Array.isArray(sections)||!sections.length)sections=v18ParseContext(x.input?.known_context||'');return `<div class="v18-box"><h2>Editable Meeting Context</h2><div id="v18Context_${x.id}">${sections.map((s,i)=>`<div class="v18-editor" data-key="${esc(s.section_key)}"><label>Topic Header</label><input class="v18-title" value="${esc(s.section_title)}"><label>Content</label><textarea class="v18-text">${esc(s.section_text)}</textarea></div>`).join('')}</div><div id="v18ContextStatus_${x.id}" class="v18-status"></div><button onclick="v18AddContext(${x.id})">Add Section</button><button class="primary" onclick="v18SaveContext(${x.id})">Save Context</button></div>`}
+function v18AddContext(id){const root=document.getElementById('v18Context_'+id),d=document.createElement('div');d.className='v18-editor';d.dataset.key='context_'+root.children.length;d.innerHTML='<label>Topic Header</label><input class="v18-title" value="New Section"><label>Content</label><textarea class="v18-text"></textarea>';root.appendChild(d)}
+async function v18SaveContext(id){const root=document.getElementById('v18Context_'+id),sections=[...root.querySelectorAll('.v18-editor')].map((x,i)=>({section_key:x.dataset.key,section_title:x.querySelector('.v18-title').value,section_text:x.querySelector('.v18-text').value,sort_order:i})),s=document.getElementById('v18ContextStatus_'+id);s.textContent='Saving...';try{const r=await v18Timeout('/api/v16/'+id+'/context',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({sections})}),d=await r.json();if(!r.ok)throw new Error(d.error||'Save failed');s.textContent=`Saved ${d.saved} sections.`}catch(e){s.textContent='Save failed: '+e.message}}
+async function v18Pipeline(id){const r=await v18Timeout('/api/meeting-plan-v7/'+id+'/pipeline'),p=await r.json();if(!r.ok)throw new Error(p.error||'Pipeline failed');return `<div class="v18-box"><h2>Pipeline Evidence</h2><p>${esc(p.design_decision||'')}</p>${p.stages.map(s=>`<div class="v18-pipeline"><div class="v18-num">${s.number}</div><div><strong>${esc(s.name)}</strong><p>${esc(s.framework)}</p></div><div><strong>Inputs and Processing</strong><p>${esc(s.inputs.join(' | '))}</p><p>${esc(s.processing)}</p></div><div><strong>Output</strong><p>${esc(s.output)}</p><p>${s.captured?'Audit captured':'Historical record not fully audited'}</p></div></div>`).join('')}</div>`}
+async function openMeetingPlan(id){route('meetingplan');meetingplanView.innerHTML='<p>Loading...</p>';try{const [r,pipe]=await Promise.all([v18Timeout('/api/call-report-v4/'+id),v18Pipeline(id)]),x=await r.json();if(!r.ok)throw new Error(x.error||'Meeting Plan failed');const editor=await v18ContextEditor(x);meetingplanView.innerHTML=`<div class="v18-page">${v18Hero(x)}${v18Stage(x.prepared_call||{})}${editor}${v18Agenda(x.prepared_call||{})}${v18Discovery(x.prepared_call||{},false,new Map())}${v18Meddpicc(x.prepared_call||{},false,new Map())}<div class="v18-box"><h2>Actions</h2><div class="v18-toolbar"><button class="primary" onclick="openMeetingExecution(${id})">Launch Meeting Execution</button>${v18PreviewButtons(x)}</div></div>${pipe}</div>`}catch(e){meetingplanView.innerHTML=`<div class="v18-error"><h3>Meeting Plan failed</h3><p>${esc(e.message)}</p></div>`}}
+async function openMeetingExecution(id){route('meetingexecution');meetingexecutionView.innerHTML='<p>Loading...</p>';try{const r=await v18Timeout('/api/call-report-v4/'+id),x=await r.json();if(!r.ok)throw new Error(x.error||'Meeting Execution failed');const c=x.prepared_call||{},saved=new Map((x.answers||[]).map(a=>[a.question_key,a]));meetingexecutionView.innerHTML=`<div class="v18-page">${v18Hero(x)}${v18Stage(c)}<div class="v18-box"><h2>Executive Opening</h2><div class="v18-script">${v18Rich(c.opening_talk_track)}</div></div>${(c.agenda||[]).map(a=>`<div class="v18-box"><div class="v18-label">${esc(v18Mins(a.minutes||a.time))}</div><h2>${esc(a.topic||'Agenda Item')}</h2><div class="v18-script">${v18Rich(a.talk_track||a.output||'Script not generated.')}</div><h3>Questions</h3>${(a.questions||[]).map(q=>v18Question('Agenda: '+(a.topic||''),q,saved)).join('')}</div>`).join('')}${v18Qid(c,saved)}${v18Meddpicc(c,true,saved)}${v18Discovery(c,true,saved)}<div id="v18Status_${id}" class="v18-status"></div><button class="primary" onclick="v18SaveAnswers(${id})">Save Meeting Answers</button><button onclick="openMeetingPlan(${id})">Return to Meeting Plan</button></div>`}catch(e){meetingexecutionView.innerHTML=`<div class="v18-error"><h3>Meeting Execution failed</h3><p>${esc(e.message)}</p></div>`}}
+async function v18SaveAnswers(id){const answers=[...meetingexecutionView.querySelectorAll('.v18-question')].map(x=>({question_key:x.dataset.key,section:x.dataset.section,question:x.dataset.question,answer:x.querySelector('.qa-answer').value,notes:x.querySelector('.qa-notes').value,importance:x.querySelector('.qa-importance').value,confirmed:x.querySelector('.qa-confirmed').checked})),s=document.getElementById('v18Status_'+id);s.textContent='Saving...';try{const r=await v18Timeout('/api/call-report-v4/'+id+'/answers',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers})}),d=await r.json();if(!r.ok)throw new Error(d.error||'Save failed');s.textContent=`Saved ${d.saved} answers. Refreshing deliverables...`;await v18GenerateDeliverables(id);s.textContent+=' Done.'}catch(e){s.textContent='Save failed: '+e.message}}
+function v18Tabs(id,tabs){return `<div id="${id}"><div class="v18-tabs">${tabs.map((t,i)=>`<button onclick="v18Select('${id}',${i})">${t.title}</button>`).join('')}</div>${tabs.map((t,i)=>`<div class="v18-pane">${t.html}</div>`).join('')}</div>`}
+function v18Select(id,i){const r=document.getElementById(id);r.querySelectorAll('.v18-tabs button').forEach((b,n)=>b.classList.toggle('active',n===i));r.querySelectorAll('.v18-pane').forEach((p,n)=>p.classList.toggle('active',n===i))}
+async function openResearchReport(id){route('researchreport');researchreportView.innerHTML='<p>Loading...</p>';try{const [r,pipe]=await Promise.all([v18Timeout('/api/call-report-v4/'+id),v18Pipeline(id)]),x=await r.json();if(!r.ok)throw new Error(x.error||'Report failed');const tid='v18tabs_'+id,tabs=[{title:'Partner Research',html:v18Prose('Partner Research',x.partner_research)},{title:'Prospective-Client Research',html:v18Prose('Prospective-Client Research',x.client_research)},{title:'Research Reconciliation',html:v18Prose('Reconciled Research',x.reconciled_research)},{title:'Call Synthesis',html:v18Agenda(x.prepared_call||{})+v18Discovery(x.prepared_call||{},false,new Map())+v18Meddpicc(x.prepared_call||{},false,new Map())},{title:'Pipeline Evidence',html:pipe}];researchreportView.innerHTML=v18Tabs(tid,tabs);v18Select(tid,0)}catch(e){researchreportView.innerHTML=`<div class="v18-error"><h3>Report failed</h3><p>${esc(e.message)}</p></div>`}}
+async function openQueryAudit(id){route('queryaudit');queryauditView.innerHTML='<p>Loading...</p>';try{const r=await v18Timeout('/api/prep-query-audit/'+id),rows=await r.json();queryauditView.innerHTML=rows.length?rows.map(x=>`<div class="v18-box"><h2>${esc(x.stage)}</h2><details><summary>System instruction</summary><pre style="white-space:pre-wrap">${esc(x.system_query)}</pre></details><details><summary>Query input</summary><pre style="white-space:pre-wrap">${esc(x.user_query)}</pre></details><details><summary>Raw structured data</summary><pre style="white-space:pre-wrap">${esc(JSON.stringify(x.response,null,2))}</pre></details></div>`).join(''):'<div class="v18-box">Legacy record has no audit.</div>'}catch(e){queryauditView.innerHTML=`<div class="v18-error">${esc(e.message)}</div>`}}
+function v18PreviewButtons(x){return `<div class="v18-files">${x.account_plan_url?`<button onclick="openHistoryPreview(${x.id},'plan')">Account Plan</button>`:'<span class="pill">No Account Plan</span>'}${x.strategy_brief_url?`<button onclick="openHistoryPreview(${x.id},'brief')">Strategy Brief</button>`:'<span class="pill">No Strategy Brief</span>'}</div>`}
+async function openHistoryPreview(id,type){route('meetingplan');meetingplanView.innerHTML='<p>Loading...</p>';try{const r=await v18Timeout('/api/call-report-v4/'+id),x=await r.json();if(!r.ok)throw new Error(x.error||'Preview failed');const plan=type==='plan',title=plan?'Account Plan Preview':'Strategy Brief Preview',url=plan?x.account_plan_url:x.strategy_brief_url,name=plan?x.account_plan_name:x.strategy_brief_name;meetingplanView.innerHTML=`<div class="v18-page"><div class="v18-box v18-hero"><h1>${title}</h1><p>${esc(x.partner_name)} | ${esc(x.account_name)}</p><div class="v18-toolbar"><button onclick="openMeetingPlan(${id})">Meeting Plan</button><button onclick="openResearchReport(${id})">Research Report</button></div></div>${v18Prose('Content Source',x.reconciled_research||x.partner_research||x.client_research)}<div class="v18-box v18-download"><h2>Download Original File</h2>${url?`<a class="btn primary" href="${url}" download>Download ${plan?'Account Plan':'Strategy Brief'}</a><p><a href="${url}" download>${esc(name||'Generated file')}</a></p>`:'<p>No file attached.</p>'}</div></div>`}catch(e){meetingplanView.innerHTML=`<div class="v18-error">${esc(e.message)}</div>`}}
+function v18ExportObject(x){const r=JSON.parse(JSON.stringify(x.reconciled_research||x.partner_research||x.client_research||{})),c=x.prepared_call||{},answers=x.answers||[];r.executive_summary=[r.executive_summary,c.meeting_thesis,answers.filter(a=>a.answer).map(a=>`${a.question}: ${a.answer}`).join('\n')].filter(Boolean).join('\n\n');r.meeting_agenda=(c.agenda||[]).map(a=>({time:v18Mins(a.minutes||a.time),topic:a.topic,desired_output:a.talk_track||a.output,questions:a.questions||[]}));r.meddpicc=c.meddpicc;r.sales_stage=c.sales_stage;return r}
+async function v18GenerateDeliverables(id){const r=await v18Timeout('/api/call-report-v4/'+id),x=await r.json();if(!r.ok)throw new Error(x.error||'Record unavailable');const name=[x.partner_name,x.account_name].filter(Boolean).join('_'),e=await v18Timeout('/api/research-exports',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({call_prep_id:id,partner_name:name,presenter:'Justin Naughton',result:v18ExportObject(x)})},180000),d=await e.json();if(!e.ok)throw new Error(d.error||'Deliverable generation failed');return d}
+async function deleteV18(id){if(!confirm('Delete this record, audit trail, and generated files?'))return;const r=await v18Timeout('/api/history-v3/'+id,{method:'DELETE'}),d=await r.json();if(!r.ok)return alert(d.error||'Delete failed');loadCallPrepHistory()}
+loadCallPrepHistory=async function(){historyView.innerHTML='<p>Loading...</p>';try{const r=await v18Timeout('/api/call-report-v4',{},10000),rows=await r.json();if(!r.ok)throw new Error(rows.error||'History failed');historyView.innerHTML=`<div class="v18-history"><div class="v18-head"><div>Meeting</div><div>Created</div><div>Workspace Actions</div><div>Deliverable Previews</div></div>${rows.map(x=>`<article class="v18-row"><div><strong>${esc(x.partner_name||'Partner')}</strong><div class="muted">${esc(x.account_name||'')}</div></div><div>${esc(x.created_date||'')}<div class="muted">${esc(x.model||'')}</div></div><div class="v18-actions"><button onclick="openMeetingPlan(${x.id})">Meeting Plan</button><button class="primary" onclick="openMeetingExecution(${x.id})">Meeting Execution</button><button onclick="openResearchReport(${x.id})">Research Report</button><button class="danger" onclick="deleteV18(${x.id})">Delete</button></div><div>${v18PreviewButtons(x)}</div></article>`).join('')}</div>`}catch(e){historyView.innerHTML=`<div class="v18-error"><h3>History failed</h3><p>${esc(e.message)}</p><button onclick="loadCallPrepHistory()">Retry</button></div>`}}
+generateCallPrep=async function(){cpGenerate.disabled=true;cpResult.innerHTML='';cpDownloads.innerHTML='';const body={partner_name:cpPartner.value.trim(),account_name:cpAccount.value.trim(),meeting_objective:cpObjective.value.trim(),attendees:cpAttendees.value.trim(),known_context:cpContext.value.trim(),constraints:cpConstraints.value.trim(),duration_minutes:Number(cpDuration.value),presenter:'Justin Naughton',meeting_type:'Public-sector partner discovery'};try{cpStatus.textContent='Running partner research, client research, reconciliation, and call synthesis...';const r=await v18Timeout('/api/audited-partner-client-prep/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},240000),d=await r.json();if(!r.ok)throw new Error(d.error||'Generation failed');cpStatus.textContent='Generating Account Plan and Strategy Brief...';
+
+try{
+
+const exportResult=
+await v18GenerateDeliverables(d.id);
+
+console.log(
+'Initial deliverable generation success',
+exportResult
+);
+
+}
+catch(exportError){
+
+console.error(
+'INITIAL DELIVERABLE FAILURE',
+exportError
+);
+
+cpStatus.textContent=
+'Deliverable generation failed: '+
+exportError.message;
+
+alert(
+'Initial deliverable generation failed.\n\n' +
+exportError.message
+);
+throw exportError;
+}
+
+cpStatus.textContent=
+'Complete. Opening Meeting Plan.';
+
+openMeetingPlan(d.id)}catch(e){cpStatus.textContent='Generation failed: '+e.message}finally{cpGenerate.disabled=false}};
+/* END_V18_CLEAN_REBUILD */
+/* MEETING_EXECUTION_SAVE_FIX_V1 */
+(function(){
+  function text(v){return String(v==null?'':v).trim();}
+  function key(section,question,index){
+    var raw=(section+'|'+question+'|'+index).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+    return raw.slice(0,120)||('answer_'+index);
+  }
+  function closestText(el,selectors){
+    var root=el.closest('.v18-answer-card,.v18-question-card,.question-card,.answer-card,.v18-card,.card')||el.parentElement;
+    if(!root)return '';
+    for(var i=0;i<selectors.length;i++){
+      var node=root.querySelector(selectors[i]);
+      if(node&&text(node.textContent))return text(node.textContent);
+    }
+    return '';
+  }
+  function collectAnswers(){
+    var fields=Array.from(document.querySelectorAll(
+      '[data-question-key] textarea,[data-question-key] input[type="text"],'+
+      'textarea[data-question],input[type="text"][data-question],'+
+      '#v18Modal textarea,#v18Modal input[type="text"],'+
+      '.v18-modal textarea,.v18-modal input[type="text"]'
+    ));
+    var seen=new Set(),answers=[];
+    fields.forEach(function(field,index){
+      if(field.disabled||field.type==='hidden')return;
+      var answer=text(field.value);
+      var question=text(field.dataset.question||field.getAttribute('aria-label')||closestText(field,['[data-question]','.v18-question','.question','label','strong']));
+      if(!question||question.toLowerCase()==='answer'||question.toLowerCase()==='notes')return;
+      var section=text(field.dataset.section||closestText(field,['[data-section]','.v18-section-title','.section-title','h2','h3','h4']))||'Meeting Execution';
+      var qkey=text(field.dataset.questionKey||field.closest('[data-question-key]')?.dataset.questionKey)||key(section,question,index);
+      if(seen.has(qkey))return;
+      seen.add(qkey);
+      var root=field.closest('.v18-answer-card,.v18-question-card,.question-card,.answer-card,.v18-card,.card')||field.parentElement;
+      var notes=root?.querySelector('textarea[data-role="notes"],input[data-role="notes"],.answer-notes');
+      var importance=root?.querySelector('select[data-role="importance"],.answer-importance');
+      var confirmed=root?.querySelector('input[type="checkbox"][data-role="confirmed"],.answer-confirmed');
+      answers.push({question_key:qkey,section:section,question:question,answer:answer,notes:text(notes?.value),importance:text(importance?.value)||'Medium',confirmed:!!confirmed?.checked});
+    });
+    return answers.filter(function(a){return a.answer;});
+  }
+  window.v18SaveAnswers=async function(id){
+    var answers=collectAnswers();
+    if(!answers.length){throw new Error('No non-empty Meeting Execution answers were found. Enter an answer before saving.');}
+    var response=await fetch('/api/call-report-v4/'+encodeURIComponent(id)+'/answers',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:answers})});
+    var raw=await response.text(),payload={};
+    try{payload=raw?JSON.parse(raw):{};}catch(e){payload={raw:raw};}
+    if(!response.ok||payload.success===false)throw new Error(payload.error||payload.raw||('Answer save failed with HTTP '+response.status));
+    var verify=await fetch('/api/call-report-v4/'+encodeURIComponent(id));
+    if(!verify.ok)throw new Error('Answers saved, but verification failed with HTTP '+verify.status);
+    var detail=await verify.json();
+    var saved=Array.isArray(detail.answers)?detail.answers:[];
+    var missing=answers.filter(function(a){return !saved.some(function(s){return s.question_key===a.question_key&&text(s.answer)===a.answer;});});
+    if(missing.length)throw new Error('The API accepted the request, but '+missing.length+' answer(s) were not returned during verification.');
+    if(typeof window.v18GenerateDeliverables==='function')await window.v18GenerateDeliverables(id);
+    alert('Saved and verified '+answers.length+' Meeting Execution answer(s). Account Plan and Strategy Brief were refreshed.');
+    return {success:true,saved:answers.length,answers:answers};
+  };
+})();
+/* END_MEETING_EXECUTION_SAVE_FIX_V1 */
+
+/* POST_MEETING_RESYNTHESIS_UI_V1 */
+(function(){
+ function t(v){return String(v==null?'':v).trim()}
+ function collect(){
+  return Array.from(document.querySelectorAll('.v18-question')).map(function(card,index){
+   var question=t(card.dataset.question||card.querySelector('strong')?.textContent),section=t(card.dataset.section)||'Meeting Execution';
+   var answer=card.querySelector('.qa-answer'),notes=card.querySelector('.qa-notes'),importance=card.querySelector('.qa-importance'),confirmed=card.querySelector('.qa-confirmed');
+   var key=t(card.dataset.key);if(!key){key=(section+'|'+question+'|'+index).toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,120)}
+   return {question_key:key,section:section,question:question,answer:t(answer?.value),notes:t(notes?.value),importance:t(importance?.value)||'Medium',confirmed:!!confirmed?.checked};
+  }).filter(function(x){return x.question&&x.answer});
+ }
+ window.v18SaveAnswers=async function(id){
+  var status=document.getElementById('v18Status_'+id),answers=collect();
+  try{
+   if(!answers.length)throw new Error('Enter at least one non-empty Meeting Execution answer before saving.');
+   if(status)status.textContent='Saving and verifying '+answers.length+' answer(s)...';
+   var save=await fetch('/api/call-report-v4/'+encodeURIComponent(id)+'/answers',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers:answers})});
+   var saveBody=await save.json();if(!save.ok||saveBody.success===false)throw new Error(saveBody.error||'Answer save failed.');
+   var detailResponse=await fetch('/api/call-report-v4/'+encodeURIComponent(id)),detail=await detailResponse.json();if(!detailResponse.ok)throw new Error(detail.error||'Answer verification failed.');
+   var persisted=Array.isArray(detail.answers)?detail.answers:[],missing=answers.filter(function(a){return !persisted.some(function(p){return p.question_key===a.question_key&&t(p.answer)===a.answer})});
+   if(missing.length)throw new Error(missing.length+' answer(s) failed persistence verification.');
+   if(status)status.textContent='Answers saved. Running post-meeting LLM resynthesis...';
+   var synth=await fetch('/api/post-meeting-resynthesis/'+encodeURIComponent(id),{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}),synthBody=await synth.json();
+   if(!synth.ok||synthBody.success===false)throw new Error(synthBody.error||'Post-meeting LLM resynthesis failed.');
+   if(status)status.textContent='Resynthesis complete. Refreshing Account Plan and Strategy Brief...';
+   if(typeof window.v18GenerateDeliverables!=='function')throw new Error('Deliverable generator is unavailable.');
+   await window.v18GenerateDeliverables(id);
+   if(status)status.textContent='Answers saved. Post-meeting resynthesis completed. Meeting Plan, Account Plan, and Strategy Brief updated.';
+   alert('Saved '+answers.length+' answer(s), completed post-meeting LLM resynthesis, and refreshed both deliverables.');
+   if(typeof window.openMeetingPlan==='function')await window.openMeetingPlan(id);
+   return {success:true,saved:answers.length,resynthesized:true,stage:synthBody.stage};
+  }catch(e){if(status)status.textContent='Save/update failed: '+e.message;throw e}
+ }
+})();
+/* END_POST_MEETING_RESYNTHESIS_UI_V1 */
+</script>
+<!-- FINAL_SAVE_RESYNTHESIS_WIRING_V2 -->
+<script>
+(function(){
+  'use strict';
+  const PATCH='FINAL_SAVE_RESYNTHESIS_WIRING_V2';
+  const clean=v=>String(v==null?'':v).trim();
+
+  function collectMeetingAnswers(){
+    const cards=Array.from(document.querySelectorAll('.v18-question[data-question], .v18-question'));
+    const answers=[];
+    cards.forEach((card,index)=>{
+      const question=clean(card.dataset.question||card.querySelector('strong')?.textContent);
+      const section=clean(card.dataset.section)||'Meeting Execution';
+      const answerField=card.querySelector('.qa-answer, textarea[data-role="answer"], input[data-role="answer"]');
+      const notesField=card.querySelector('.qa-notes, textarea[data-role="notes"], input[data-role="notes"]');
+      const importanceField=card.querySelector('.qa-importance, select[data-role="importance"]');
+      const confirmedField=card.querySelector('.qa-confirmed, input[data-role="confirmed"]');
+      const answer=clean(answerField?.value);
+      if(!question||!answer)return;
+      let key=clean(card.dataset.key||card.dataset.questionKey);
+      if(!key){
+        key=(section+'|'+question+'|'+index).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,120);
+      }
+      answers.push({
+        question_key:key,
+        section,
+        question,
+        answer,
+        notes:clean(notesField?.value),
+        importance:clean(importanceField?.value)||'Medium',
+        confirmed:!!confirmedField?.checked
+      });
+    });
+    return answers;
+  }
+
+  async function jsonFetch(url,options={}){
+    const response=await fetch(url,options);
+    const raw=await response.text();
+    let body={};
+    try{body=raw?JSON.parse(raw):{};}catch{body={raw};}
+    if(!response.ok||body.success===false){
+      throw new Error(body.error||body.raw||('HTTP '+response.status+' from '+url));
+    }
+    return body;
+  }
+
+  function setStatus(id,message,isError=false){
+    const node=document.getElementById('v18Status_'+id)||document.getElementById('answerStatus_'+id);
+    if(node){node.textContent=message;node.style.color=isError?'#ff8a9b':'';}
+  }
+
+  async function authoritativeSave(id){
+    const answers=collectMeetingAnswers();
+    if(!answers.length)throw new Error('Enter at least one non-empty Meeting Execution answer before saving.');
+
+    setStatus(id,'1 of 4: Saving '+answers.length+' answer(s)...');
+    await jsonFetch('/api/call-report-v4/'+encodeURIComponent(id)+'/answers',{
+      method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({answers})
+    });
+
+    setStatus(id,'2 of 4: Verifying persisted answers...');
+    const detail=await jsonFetch('/api/call-report-v4/'+encodeURIComponent(id));
+    const persisted=Array.isArray(detail.answers)?detail.answers:[];
+    const missing=answers.filter(a=>!persisted.some(p=>p.question_key===a.question_key&&clean(p.answer)===a.answer));
+    if(missing.length)throw new Error(missing.length+' answer(s) failed persistence verification.');
+
+    setStatus(id,'3 of 4: Running Stage 5 post-meeting LLM resynthesis...');
+    const synthesis=await jsonFetch('/api/post-meeting-resynthesis/'+encodeURIComponent(id),{
+      method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
+    });
+
+    setStatus(id,'4 of 4: Regenerating Account Plan and Strategy Brief...');
+    if(typeof window.v18GenerateDeliverables!=='function'){
+      throw new Error('v18GenerateDeliverables is unavailable. Resynthesis succeeded, but files were not refreshed.');
+    }
+    await window.v18GenerateDeliverables(id);
+
+    const message='Answers saved and verified. Stage 5 post-meeting resynthesis completed. Meeting Plan, Account Plan, and Strategy Brief updated.';
+    setStatus(id,message);
+    alert(message);
+    if(typeof window.openMeetingPlan==='function')await window.openMeetingPlan(id);
+    return {success:true,saved:answers.length,resynthesized:true,stage:synthesis.stage,patch:PATCH};
+  }
+
+  // Final global override. This runs after all historical scripts.
+  window.v18SaveAnswers=async function(id){
+    try{return await authoritativeSave(id);}
+    catch(error){setStatus(id,'Save/update failed: '+error.message,true);alert('Save/update failed: '+error.message);throw error;}
+  };
+
+  // Capture clicks as a second protection against stale inline onclick handlers.
+  document.addEventListener('click',function(event){
+    const button=event.target.closest('button');
+    if(!button)return;
+    const inline=button.getAttribute('onclick')||'';
+    const match=inline.match(/v18SaveAnswers\((\d+)\)/);
+    if(!match)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    window.v18SaveAnswers(Number(match[1]));
+  },true);
+
+  window.__finalSaveResynthesisPatch={name:PATCH,installed:true,collectMeetingAnswers};
+})();
+</script>
+<!-- END_FINAL_SAVE_RESYNTHESIS_WIRING_V2 -->
+<!-- V20_PROPER_UI -->
+<style>
+.v20-stack{display:block!important;width:100%!important;max-width:none!important;grid-column:1/-1!important;float:none!important}
+.v20-context-section,.v20-prose-section{display:block;width:100%;border:1px solid #654184;border-left:5px solid #fcaf1a;border-radius:10px;padding:16px;margin:14px 0;background:#210d34;color:#fff}
+.v20-context-section h3,.v20-prose-section h3{margin:0 0 10px;font-size:20px}.v20-context-section p,.v20-context-section li,.v20-prose-section p,.v20-prose-section li{font-size:16px;line-height:1.55}
+.v20-label{display:block;font-weight:800;color:#fcaf1a;margin-top:10px}.v20-format-button{margin-top:8px}
+</style>
+<script>
+(function(){
+  'use strict';
+  const MARKER='V20_PROPER_UI';
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function title(value){return String(value||'').replace(/_/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});}
+  function renderText(text){
+    const lines=String(text||'').split(/\n/);let html='';let bullets=[];
+    const flush=function(){if(bullets.length){html+='<ul>'+bullets.map(function(x){return '<li>'+esc(x)+'</li>';}).join('')+'</ul>';bullets=[];}};
+    lines.forEach(function(raw){const line=raw.trim();if(!line){flush();return;}if(/^[-*â€¢â–ªâ—¦]\s+/.test(line)){bullets.push(line.replace(/^[-*â€¢â–ªâ—¦]\s+/,''));}else{flush();html+='<p>'+esc(line)+'</p>';}});flush();return html;
+  }
+  window.v20RenderContext=function(sections){return (sections||[]).map(function(section){return '<section class="v20-context-section"><h3>'+esc(section.heading||'Context')+'</h3>'+renderText(section.content||'')+'</section>';}).join('');};
+  window.v20RenderProse=function(value,label){
+    if(value==null||value==='')return '';
+    if(Array.isArray(value))return value.map(function(item,index){return window.v20RenderProse(item,(label||'Item')+' '+(index+1));}).join('');
+    if(typeof value==='object'){
+      const heading=value.title||value.dimension||value.headline||value.name||label||'Section';
+      const body=Object.keys(value).filter(function(key){return !['title','dimension','headline','name'].includes(key);}).map(function(key){return '<div><span class="v20-label">'+esc(title(key))+'</span>'+window.v20RenderProse(value[key],'')+'</div>';}).join('');
+      return '<section class="v20-prose-section"><h3>'+esc(heading)+'</h3>'+body+'</section>';
+    }
+    return label?'<p><strong>'+esc(title(label))+':</strong> '+esc(value)+'</p>':'<p>'+esc(value)+'</p>';
+  };
+  window.v20BuildCompositeSource=function(record){const r=record||{};return {meeting_input:r.input||{},partner_research:r.partner_research||{},client_research:r.client_research||{},reconciliation:r.reconciled_research||{},meeting_plan:r.prepared_call||{},captured_answers:(r.answers||[]).filter(function(a){return String(a.answer||'').trim();}),meddpicc:(r.prepared_call&&r.prepared_call.meddpicc)||{}};};
+  function contextField(){return document.getElementById('cpContext')||document.getElementById('cpKnownContext')||document.querySelector('textarea[name*="context" i],textarea[id*="context" i]');}
+  async function parseContext(text){const response=await fetch('/api/v20/context/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({context:text})});if(!response.ok)throw new Error(await response.text());return response.json();}
+  window.v20FormatKnownContext=async function(){const field=contextField();if(!field)return alert('Known Context field was not found.');const parsed=await parseContext(field.value);field.value=parsed.formatted||field.value;field.dispatchEvent(new Event('input',{bubbles:true}));alert('Known Context was structured into headings, paragraphs, and bullets.');};
+  function installContextButton(){const field=contextField();if(!field||document.getElementById('v20FormatContextButton'))return;const button=document.createElement('button');button.type='button';button.id='v20FormatContextButton';button.className='v20-format-button';button.textContent='Format and Structure Context';button.addEventListener('click',window.v20FormatKnownContext);field.insertAdjacentElement('afterend',button);}
+  function enforceLayout(){document.querySelectorAll('[id*="agenda" i],[class*="agenda" i],[id*="discovery" i],[class*="discovery" i]').forEach(function(element){if(element.closest('.modal')||element.closest('[role="dialog"]'))element.classList.add('v20-stack');});}
+  function wrapGeneration(){if(window.__v20ProperGenerateWrapped)return;const original=window.generateCallPrep;if(typeof original!=='function')return;window.generateCallPrep=async function(){const field=contextField();if(field&&field.value.trim()){try{const parsed=await parseContext(field.value);field.value=parsed.formatted||field.value;}catch(error){console.warn('V20 context parsing failed; preserving original context.',error);}}return original.apply(this,arguments);};window.__v20ProperGenerateWrapped=true;}
+  function boot(){installContextButton();enforceLayout();wrapGeneration();}
+  document.addEventListener('DOMContentLoaded',boot);new MutationObserver(boot).observe(document.documentElement,{childList:true,subtree:true});setTimeout(boot,250);
+  console.info(MARKER+' loaded');
+})();
+</script>
+</body></html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
