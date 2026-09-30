@@ -1,0 +1,18 @@
+/* ADMIN_LLM_CONFIG_UI_V20_9_1 */
+(function(){
+'use strict';
+const style=document.createElement('style');style.textContent=`.llm-admin{margin-top:16px;border-left:5px solid var(--gold)}.llm-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.llm-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.llm-state{padding:10px;border:1px solid var(--line);border-radius:8px;background:#180825;margin-bottom:12px}.llm-state.ok{border-left:5px solid #20b7af}.llm-state.warn{border-left:5px solid #e5a00d}.llm-note{color:var(--muted);font-size:12px}.llm-message{margin-top:10px;font-weight:700}@media(max-width:800px){.llm-grid{grid-template-columns:1fr}}`;document.head.appendChild(style);
+async function api(url,options){const r=await fetch(url,options);const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||`HTTP ${r.status}`);return d}
+async function render(){
+ const admin=document.getElementById('admin');if(!admin)return;let p=document.getElementById('llmAdminV2091');if(!p){p=document.createElement('section');p.id='llmAdminV2091';p.className='panel llm-admin';admin.appendChild(p)}
+ p.innerHTML='<h2>AI Configuration Manager</h2><div id="llmState" class="llm-state warn">Loading...</div><form id="llmForm"><div class="llm-grid"><div class="field"><label>BLACKDUCK_LLM_MODEL</label><input id="llmModel" required placeholder="Gateway model name"></div><div class="field"><label>BLACKDUCK_LLM_API_KEY</label><input id="llmKey" type="password" autocomplete="new-password" placeholder="Leave blank to retain current key"></div></div><p class="llm-note">Saved as Windows User environment variables. The API key is never returned to the browser or stored in SQLite.</p><div class="llm-actions"><button class="primary" type="submit">Save Configuration</button><button id="llmValidate" type="button">Validate Configuration</button><button id="llmClear" class="danger" type="button">Clear Configuration</button></div><div id="llmMessage" class="llm-message"></div></form>';
+ const state=p.querySelector('#llmState'),model=p.querySelector('#llmModel'),key=p.querySelector('#llmKey'),msg=p.querySelector('#llmMessage');
+ async function refresh(){try{const d=await api('/api/admin/llm-config');model.value=d.model||'';state.className='llm-state '+(d.configured?'ok':'warn');state.textContent=d.configured?`Configured | Model: ${d.model} | API key: present | ${d.storage}`:`Incomplete | Model: ${d.model||'not set'} | API key: ${d.keyPresent?'present':'not set'}`;}catch(e){state.className='llm-state warn';state.textContent=e.message}}
+ p.querySelector('#llmForm').onsubmit=async e=>{e.preventDefault();msg.textContent='Saving...';try{const d=await api('/api/admin/llm-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model.value,apiKey:key.value})});key.value='';msg.textContent=d.message;await refresh()}catch(e2){msg.textContent=e2.message}};
+ p.querySelector('#llmValidate').onclick=async()=>{msg.textContent='Validating...';try{msg.textContent=(await api('/api/admin/llm-config/validate',{method:'POST'})).message}catch(e){msg.textContent=e.message}};
+ p.querySelector('#llmClear').onclick=async()=>{if(!confirm('Clear the local User-scoped model and API key?'))return;try{msg.textContent=(await api('/api/admin/llm-config',{method:'DELETE'})).message;key.value='';await refresh()}catch(e){msg.textContent=e.message}};
+ await refresh();
+}
+const oldRoute=window.route;window.route=function(id){const r=oldRoute.apply(this,arguments);if(id==='admin')setTimeout(render,0);return r};
+console.log('ADMIN_LLM_CONFIG_UI_V20_9_1 loaded');
+})();

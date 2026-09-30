@@ -81,6 +81,7 @@ require('./executive-strategy-v20')(app, db, __dirname); // EXECUTIVE_STRATEGY_E
 app.use(express.static(path.join(__dirname,"frontend")));
 app.get("/", (req,res) => res.sendFile(path.join(__dirname,"frontend","index.html")));
 require('./v20-content-quality')(app, db); // V20_PROPER
+require('./admin-llm-config-v20.9.1')(app); // ADMIN_LLM_CONFIG_API_V20_9_1
 
 
 app.use((req,res) => {
