@@ -1,19 +1,11 @@
-﻿
-# Runtime databases
-database/*.db
-database/*.sqlite
-database/*.sqlite3
 
-# Generated backups
-backup-*/
-backups/
+archive-pre-github/
+exports/
 
-# Local diagnostics
-resources-search.txt
-show-se-resources.js
-show-se-resources-data.js
-show-tables.js
+*.log
 
-# Node runtime
-node_modules/
+workspace.db
+*.db
+*.db-wal
+*.db-shm
 
