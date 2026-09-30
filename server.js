@@ -1,4 +1,4 @@
-﻿const express = require("express");
+const express = require("express");
 const path = require("path");
 const Database = require("better-sqlite3");
 const app = express();
@@ -73,17 +73,27 @@ require("./meeting-plan-v7")(app, db, __dirname);
 require("./discovery-framework-v10")(app, db, __dirname);
 require("./meddpicc-v16")(app, db, __dirname);
 require("./post-meeting-resynthesis")(app, db, __dirname);
+require('./stage-management-v12')(app, db); // STAGE_MANAGEMENT_V12
+require('./solution-discovery-pool-v15')(app, db); // SOLUTION_DISCOVERY_POOL_V15
+require('./vision-capability-v17')(app, db); // VISION_CAPABILITY_PARTNER_DISCOVERY_V17
+require('./conversation-intelligence-v18')(app, db); // CONVERSATION_INTELLIGENCE_V18
+require('./executive-strategy-v20')(app, db, __dirname); // EXECUTIVE_STRATEGY_ENGINE_V20
 app.use(express.static(path.join(__dirname,"frontend")));
 app.get("/", (req,res) => res.sendFile(path.join(__dirname,"frontend","index.html")));
 require('./v20-content-quality')(app, db); // V20_PROPER
+require('./admin-llm-config-v20.9.1')(app); // ADMIN_LLM_CONFIG_API_V20_9_1
 
 
 app.use((req,res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({error:"API endpoint not found"});
   res.sendFile(path.join(__dirname,"frontend","index.html"));
 });
+require('./admin-database-status-v21.0.0')(app); // ADMIN_DATABASE_STATUS_API_V21_0_0
 
 app.listen(PORT,"127.0.0.1",() => console.log("Black Duck SE Workspace running on port " + PORT));
+
+
+
 
 
 

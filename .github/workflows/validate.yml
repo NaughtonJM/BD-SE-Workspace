@@ -1,0 +1,110 @@
+name: Validate Workspace
+
+on:
+  push:
+    branches:
+      - main
+      - repo-cleanup
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install Dependencies
+        shell: pwsh
+        run: npm.cmd ci
+
+      - name: Syntax Check Production JavaScript
+        shell: pwsh
+        run: |
+          $files = @(
+            'server.js',
+            'call-prep.js',
+            'call-report-v4.js',
+            'discovery-framework-v10.js',
+            'history-v3.js',
+            'meddpicc-v16.js',
+            'meeting-plan-v7.js',
+            'meeting-records.js',
+            'partner-client-research.js',
+            'partner-prep-pipeline.js',
+            'post-meeting-resynthesis.js',
+            'research-audit.js',
+            'research-exports.js',
+            'se-library.js',
+            'v20-content-quality.js'
+          )
+
+          foreach ($file in $files) {
+            if (-not (Test-Path $file)) {
+              throw "Required production file is missing: $file"
+            }
+
+            Write-Host "Checking $file"
+            node --check $file
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "JavaScript syntax validation failed: $file"
+            }
+          }
+
+      - name: Start Workspace and Check Health
+        shell: pwsh
+        run: |
+          $stdout = Join-Path $env:RUNNER_TEMP 'workspace-output.log'
+          $stderr = Join-Path $env:RUNNER_TEMP 'workspace-error.log'
+          $baseUrl = 'http://' + '127.0.0.1:3000'
+          $process = Start-Process node.exe `
+            -ArgumentList 'server.js' `
+            -RedirectStandardOutput $stdout `
+            -RedirectStandardError $stderr `
+            -PassThru
+
+          try {
+            $healthy = $false
+
+            for ($i = 0; $i -lt 40; $i++) {
+              Start-Sleep -Milliseconds 500
+
+              if ($process.HasExited) {
+                $errorText = if (Test-Path $stderr) { Get-Content $stderr -Raw } else { '' }
+                throw "Workspace exited before becoming healthy. $errorText"
+              }
+
+              try {
+                $health = Invoke-RestMethod -Uri ($baseUrl + '/api/health')
+                if ($health.status -eq 'running') {
+                  $healthy = $true
+                  break
+                }
+              }
+              catch {}
+            }
+
+            if (-not $healthy) {
+              $errorText = if (Test-Path $stderr) { Get-Content $stderr -Raw } else { '' }
+              throw "Health endpoint never returned running. $errorText"
+            }
+
+            Invoke-RestMethod -Uri ($baseUrl + '/api/v20/health') | Out-Null
+          }
+          finally {
+            if ($process -and -not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force
+            }
+          }
