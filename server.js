@@ -88,6 +88,7 @@ app.use((req,res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({error:"API endpoint not found"});
   res.sendFile(path.join(__dirname,"frontend","index.html"));
 });
+require('./admin-database-status-v21.0.0')(app); // ADMIN_DATABASE_STATUS_API_V21_0_0
 
 app.listen(PORT,"127.0.0.1",() => console.log("Black Duck SE Workspace running on port " + PORT));
 
