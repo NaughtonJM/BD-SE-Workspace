@@ -1,0 +1,47 @@
+﻿name: Build Portable Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Portable Package
+        shell: powershell
+        run: |
+          .\build\Build-Portable.ps1 `
+            -Workspace $PWD `
+            -Version $env:GITHUB_REF_NAME.Replace('v','')
+
+      - name: Generate SHA256
+        shell: powershell
+        run: |
+          $zip = Get-ChildItem . -Filter *.zip -Recurse | Select-Object -First 1
+          $hash = (Get-FileHash $zip.FullName -Algorithm SHA256).Hash
+          Set-Content "$($zip.FullName).sha256.txt" "$hash  $($zip.Name)"
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            **/*.zip
+            **/*.sha256.txt
+          generate_release_notes: true
