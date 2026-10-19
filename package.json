@@ -17,6 +17,8 @@
     "express": "^5.2.1",
     "multer": "^2.4.0",
     "pptxgenjs": "^4.0.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }
-

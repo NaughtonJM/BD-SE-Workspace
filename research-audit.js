@@ -839,6 +839,18 @@ module.exports=function(app,db){
    audit.run(id,"2. Full prospective-client research (Boeing-derived 15-step framework)",FULL_CLIENT_FRAMEWORK,clientUser,JSON.stringify(clientResearch),model);
    audit.run(id,"3. Research reconciliation and semantic de-duplication",RECONCILIATION_FRAMEWORK,reconcileUser,JSON.stringify(combined),model);
    audit.run(id,"4. Research-informed call synthesis",CALL_FRAMEWORK,callUser,JSON.stringify(call),model);
+
+   const count = db.prepare(`
+    SELECT COUNT(*) AS n
+    FROM prep_query_audit
+    WHERE call_prep_id=?
+   `).get(id).n;
+
+   if(count !== 4){
+     throw new Error(
+       `Audit integrity failure. Expected 4 rows. Found ${count}.`
+     );
+   }
    res.json({id,model,result:call,partner_research:partnerResearch,client_research:clientResearch,combined_research:combined,frameworks:{partner:"Full GDIT-derived 18-step framework",client:"Full Boeing-derived 15-step framework",reconciliation:true}});
   }catch(error){res.status(500).json({error:error.message})}
  });
@@ -846,6 +858,7 @@ module.exports=function(app,db){
  app.delete("/api/prep-query-audit/:id",(req,res)=>{db.prepare("DELETE FROM prep_query_audit WHERE call_prep_id=?").run(req.params.id);res.json({success:true})});
  app.get("/api/research-frameworks",(req,res)=>res.json({partner:{name:"Full GDIT-derived public-sector partner-channel framework",steps:18,prompt:FULL_PARTNER_FRAMEWORK},client:{name:"Full Boeing-derived prospective-client framework",steps:15,prompt:FULL_CLIENT_FRAMEWORK},reconciliation:{name:"Research reconciliation and semantic de-duplication",prompt:RECONCILIATION_FRAMEWORK},call:{name:"Research-informed call synthesis",prompt:CALL_FRAMEWORK}}));
 };
+
 
 
 

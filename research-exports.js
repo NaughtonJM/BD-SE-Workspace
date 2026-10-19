@@ -21,10 +21,28 @@ function resolveExportResearch(source){
     ...(preferred||{}),
     partner_name: record.partner_name || preferred?.partner_name || preferred?.subject_name || "",
     account_name: record.account_name || preferred?.account_name || "",
+    post_meeting_intelligence: collectPostMeetingIntelligence(record),
     reconciled_research: preferred || {}
   };
 }
 
+
+/* BLACKDUCK_ACTIVE_RENDERER_ARTIFACT_PROPAGATION_V22_3_2_9 */
+function collectPostMeetingIntelligence(value){
+  const out=[]; const seen=new Set(); const visited=new WeakSet();
+  const walk=v=>{
+    if(v===undefined||v===null)return;
+    if(typeof v==="string"||typeof v==="number"||typeof v==="boolean"){
+      const s=String(v).trim(); if(s&&!/^(undefined|null)$/i.test(s)&&!seen.has(s)){seen.add(s);out.push(s);} return;
+    }
+    if(typeof v!=="object"||visited.has(v))return; visited.add(v);
+    if(Array.isArray(v)){v.forEach(walk);return;}
+    for(const [k,x] of Object.entries(v)){
+      if(!/^(partner_research|client_research|reconciled_research|sources|citations)$/i.test(k))walk(x);
+    }
+  };
+  walk(value); return out.join("\n");
+}
 /* BLACKDUCK_ACCOUNT_BRIEF_RENDERER_V22_1_0 */
 function normalizeDeliverableRow(value){
   if(!value || typeof value!=="object" || Array.isArray(value)) return value;
@@ -98,13 +116,64 @@ const PURPLE="2F1C68", TEAL="00A6A6", DARK="333333", GRAY="666666", LIGHT="F2F0F
 function safe(v){return String(v??"").replace(/[\\/:*?"<>|]+/g,"_").slice(0,100)}
 function array(v){return normalizeDeliverableArray(v)}
 function text(v){
- const raw=String(v??"").trim();
 
- if(!raw)return "";
+ if(v === null || v === undefined)
+   return "";
 
- if(/^undefined$/i.test(raw))return "";
+ if(typeof v === "string")
+   return v.trim();
 
- if(/^null$/i.test(raw))return "";
+ if(typeof v === "number" || typeof v === "boolean")
+   return String(v);
+
+ if(Array.isArray(v)){
+   return v
+     .map(text)
+     .filter(Boolean)
+     .join(" | ");
+ }
+
+ if(typeof v === "object"){
+
+   const preferred = [
+     "title",
+     "headline",
+     "name",
+     "label",
+     "summary",
+     "description",
+     "context",
+     "implication",
+     "evidence",
+     "action",
+     "outcome",
+     "value"
+   ];
+
+   const parts = [];
+
+   for(const key of preferred){
+     if(v[key]){
+       const rendered=text(v[key]);
+       if(rendered) parts.push(rendered);
+     }
+   }
+
+   if(parts.length){
+     return [...new Set(parts)].join(" | ");
+   }
+
+   try{
+     return JSON.stringify(v);
+   }catch{
+     return "";
+   }
+ }
+
+ const raw = String(v).trim();
+
+ if(/^undefined$/i.test(raw)) return "";
+ if(/^null$/i.test(raw)) return "";
 
  if(/^John Smith$/i.test(raw))
    return "Stakeholder to be confirmed";
@@ -151,7 +220,7 @@ function buildDoc(result,meta){result=dedupeResearch(result);
  c.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:700},children:[new TextRun({text:"Win together. Deliver secure software at mission scale.",italics:true,size:24,color:DARK})]}));
  c.push(table(["Prepared for","Prepared by","Research status"],[[meta.partner||"Partner",meta.presenter||"Justin Naughton","AI-generated draft; validate all external facts and citations"]]));
  c.push(new Paragraph({children:[new PageBreak()]}));
- c.push(sectionTitle("1. Executive Summary")); c.push(para(result.executive_summary));
+ c.push(sectionTitle("1. Executive Summary")); c.push(para(result.executive_summary)); c.push(subTitle("Post-Meeting Intelligence Update")); c.push(para(result.post_meeting_intelligence||"No post-meeting intelligence captured."));
  if(result.partnership_thesis){c.push(subTitle("Partnership thesis"),para(result.partnership_thesis,true));}
  c.push(sectionTitle("2. Corporate and Federal-Market Profile"));
  c.push(table(["Dimension","Verified or supplied context","Channel implication"],array(result.corporate_profile).map(x=>[x.dimension,(x.verified_fact_or_context||x.context||x.fact||x.description||x.summary),(x.analysis||x.channel_implication||x.implication||x.recommendation)])));
@@ -203,14 +272,19 @@ x.channel_implication
  s=pptx.addSlide();addTitle(s,"30 / 60 / 90 / 180-day plan","Progress through gated outcomes, not activity volume");addCards(s,array(result.channel_plan).slice(0,8).map(x=>({title:x.period+" | "+x.action,body:x.outcome})),4,1.15);
  s=pptx.addSlide();addTitle(s,"Commercial model and governance","Resolve economics and ownership before joint demand generation");addCards(s,array(result.account_strategy).slice(0,6).map(x=>({title:x.element,body:x.recommendation})),3,1.2);
  s=pptx.addSlide();addTitle(s,"Decision and immediate next actions","Earn one sponsor, qualify one lighthouse, define one operating model");addCards(s,array(result.immediate_actions).slice(0,5).map((x,i)=>({title:String(i+1),body:text(typeof x==="string"?x:x.action)})),5,1.5);
+ let intelligenceSlide=pptx.addSlide();
+ addTitle(intelligenceSlide,"Post-Meeting Intelligence","Latest structured evidence after LLM re-synthesis");
+ intelligenceSlide.addText(text(result.post_meeting_intelligence||"No post-meeting intelligence captured."),{x:.72,y:1.35,w:11.85,h:5.45,fontSize:12,color:DARK,margin:.12,valign:"top",fit:"shrink"});
  return pptx;}
 
 module.exports=function register(app,db,rootDir){
  const outDir=path.join(rootDir,"exports");fs.mkdirSync(outDir,{recursive:true});app.use("/exports",require("express").static(outDir));
  db.exec(`CREATE TABLE IF NOT EXISTS research_exports(id INTEGER PRIMARY KEY AUTOINCREMENT,call_prep_id INTEGER,partner_name TEXT,report_path TEXT,deck_path TEXT,created_date TEXT DEFAULT CURRENT_TIMESTAMP);`);
- app.post("/api/research-exports",async(req,res)=>{try{const b=req.body||{},result=resolveExportResearch(b.result||b),partner=safe(b.partner_name||result.partner_name||"Partner"),stamp=Date.now(),reportName=`${partner}_Black_Duck_Strategic_Partner_Account_Plan_${stamp}.docx`,deckName=`${partner}_Black_Duck_Executive_Partner_Strategy_${stamp}.pptx`;const reportPath=path.join(outDir,reportName),deckPath=path.join(outDir,deckName),meta={partner,presenter:b.presenter||"Justin Naughton"};const doc=buildDoc(result,meta);fs.writeFileSync(reportPath,await Packer.toBuffer(doc));const ppt=buildPpt(result,meta);await ppt.writeFile({fileName:deckPath});const r=db.prepare("INSERT INTO research_exports(call_prep_id,partner_name,report_path,deck_path) VALUES(?,?,?,?)").run(b.call_prep_id||null,partner,reportName,deckName);res.json({id:Number(r.lastInsertRowid),report_url:"/exports/"+encodeURIComponent(reportName),deck_url:"/exports/"+encodeURIComponent(deckName),report_name:reportName,deck_name:deckName});}catch(e){res.status(500).json({error:e.message});}});
+ app.post("/api/research-exports",async(req,res)=>{try{const b=req.body||{},callPrepId=Number(b.call_prep_id||0),row=callPrepId?db.prepare("SELECT result_json FROM call_prep_results WHERE id=?").get(callPrepId):null,stored=row&&row.result_json?JSON.parse(row.result_json):null,authoritative=stored?{...stored,...(b.result||{}),partner_name:b.partner_name||(b.result||{}).partner_name}:b.result||b,result=resolveExportResearch(authoritative),partner=safe(b.partner_name||result.partner_name||"Partner"),stamp=Date.now(),reportName=`${partner}_Black_Duck_Strategic_Partner_Account_Plan_${stamp}.docx`,deckName=`${partner}_Black_Duck_Executive_Partner_Strategy_${stamp}.pptx`;const reportPath=path.join(outDir,reportName),deckPath=path.join(outDir,deckName),meta={partner,presenter:b.presenter||"Justin Naughton"};const doc=buildDoc(result,meta);fs.writeFileSync(reportPath,await Packer.toBuffer(doc));const ppt=buildPpt(result,meta);await ppt.writeFile({fileName:deckPath});const r=db.prepare("INSERT INTO research_exports(call_prep_id,partner_name,report_path,deck_path) VALUES(?,?,?,?)").run(b.call_prep_id||null,partner,reportName,deckName);res.json({id:Number(r.lastInsertRowid),report_url:"/exports/"+encodeURIComponent(reportName),deck_url:"/exports/"+encodeURIComponent(deckName),report_name:reportName,deck_name:deckName});}catch(e){res.status(500).json({error:e.message});}});
  app.get("/api/research-exports",(req,res)=>res.json(db.prepare("SELECT * FROM research_exports ORDER BY id DESC").all().map(x=>({...x,report_url:"/exports/"+encodeURIComponent(x.report_path),deck_url:"/exports/"+encodeURIComponent(x.deck_path)}))));
 };
+
+
 
 
 

@@ -14,17 +14,60 @@ function resolveExportResearch(source){
     ||parse(record.client_research)
     ||record;
 
+  // BLACKDUCK_ARTIFACT_PROPAGATION_V22_3_2_5
+  // Add post-meeting intelligence to the shared source consumed by both renderers.
+  const intelligence=[];
+  const add=v=>{if(v!==undefined&&v!==null){const s=String(v).trim();if(s&&!/^(undefined|null)$/i.test(s))intelligence.push(s);}};
+  const update=parse(record.post_meeting_update)||{};
+  add(update.summary);
+  for(const key of ["confirmed_facts","hypotheses","open_questions","recommended_actions"]){
+    for(const item of Array.isArray(update[key])?update[key]:[])add(item);
+  }
+  const meddpicc=parse(record.meddpicc)||{};
+  for(const item of Object.values(meddpicc)){
+    if(item&&typeof item==="object"){
+      add(item.known);
+      for(const value of Array.isArray(item.evidence)?item.evidence:[])add(value);
+    }
+  }
+  const intelligenceText=[...new Set(intelligence)].join("\n");
+  const baseSummary=String(record.executive_summary||preferred?.executive_summary||"").trim();
+
   // Preserve report metadata while making the structured research fields
   // available at the top level expected by the DOCX/PPTX renderer.
   return {
     ...record,
     ...(preferred||{}),
+    executive_summary:[baseSummary,intelligenceText].filter(Boolean).join("\n\nPost-meeting intelligence update\n"),
+    post_meeting_intelligence:collectPostMeetingIntelligence(record),
     partner_name: record.partner_name || preferred?.partner_name || preferred?.subject_name || "",
     account_name: record.account_name || preferred?.account_name || "",
     reconciled_research: preferred || {}
   };
 }
 
+
+/* BLACKDUCK_ARTIFACT_PROPAGATION_V22_3_2_6 */
+function collectPostMeetingIntelligence(value){
+  const out=[];
+  const seen=new Set();
+  const walk=(v,path)=>{
+    if(v===undefined||v===null)return;
+    if(typeof v==="string"||typeof v==="number"||typeof v==="boolean"){
+      const text=String(v).trim();
+      if(text&&!/^(undefined|null)$/i.test(text)&&!seen.has(text)){seen.add(text);out.push(text);}
+      return;
+    }
+    if(Array.isArray(v)){for(const item of v)walk(item,path);return;}
+    if(typeof v==="object"){
+      for(const [key,item] of Object.entries(v)){
+        if(!/^(partner_research|client_research|reconciled_research|sources|citations)$/i.test(key))walk(item,path.concat(key));
+      }
+    }
+  };
+  walk(value,[]);
+  return out.join("\n");
+}
 /* BLACKDUCK_ACCOUNT_BRIEF_RENDERER_V22_1_0 */
 function normalizeDeliverableRow(value){
   if(!value || typeof value!=="object" || Array.isArray(value)) return value;
@@ -143,7 +186,7 @@ function buildDoc(result,meta){result=dedupeResearch(result);
  c.push(new Paragraph({alignment:AlignmentType.CENTER,spacing:{after:700},children:[new TextRun({text:"Win together. Deliver secure software at mission scale.",italics:true,size:24,color:DARK})]}));
  c.push(table(["Prepared for","Prepared by","Research status"],[[meta.partner||"Partner",meta.presenter||"Justin Naughton","AI-generated draft; validate all external facts and citations"]]));
  c.push(new Paragraph({children:[new PageBreak()]}));
- c.push(sectionTitle("1. Executive Summary")); c.push(para(result.executive_summary));
+ c.push(sectionTitle("1. Executive Summary")); c.push(para(result.executive_summary)); c.push(subTitle("Post-Meeting Intelligence Update")); c.push(para(result.post_meeting_intelligence||"No post-meeting intelligence captured."));
  if(result.partnership_thesis){c.push(subTitle("Partnership thesis"),para(result.partnership_thesis,true));}
  c.push(sectionTitle("2. Corporate and Federal-Market Profile"));
  c.push(table(["Dimension","Verified or supplied context","Channel implication"],array(result.corporate_profile).map(x=>[x.dimension,(x.verified_fact_or_context||x.context||x.fact||x.description||x.summary),(x.analysis||x.channel_implication||x.implication||x.recommendation)])));
@@ -200,14 +243,40 @@ x.channel_implication
  s=pptx.addSlide();addTitle(s,"30 / 60 / 90 / 180-day plan","Progress through gated outcomes, not activity volume");addCards(s,array(result.channel_plan).slice(0,8).map(x=>({title:x.period+" | "+x.action,body:x.outcome})),4,1.15);
  s=pptx.addSlide();addTitle(s,"Commercial model and governance","Resolve economics and ownership before joint demand generation");addCards(s,array(result.account_strategy).slice(0,6).map(x=>({title:x.element,body:x.recommendation})),3,1.2);
  s=pptx.addSlide();addTitle(s,"Decision and immediate next actions","Earn one sponsor, qualify one lighthouse, define one operating model");addCards(s,array(result.immediate_actions).slice(0,5).map((x,i)=>({title:String(i+1),body:text(typeof x==="string"?x:x.action)})),5,1.5);
+ let intelligenceSlide=pptx.addSlide();
+ addTitle(intelligenceSlide,"Post-Meeting Intelligence","Latest structured evidence after LLM re-synthesis");
+ intelligenceSlide.addText(text(result.post_meeting_intelligence||"No post-meeting intelligence captured."),{x:.72,y:1.35,w:11.85,h:5.45,fontSize:12,color:DARK,margin:.12,breakLine:false,valign:"top",fit:"shrink"});
  return pptx;}
 
+
+/* BLACKDUCK_RENDERER_TRACE_V22_3_2_7 */
+const __rendererTraceState={file:null,request:null};
+function __traceHash(value){try{return require("crypto").createHash("sha256").update(JSON.stringify(value)).digest("hex");}catch{return null;}}
+function __tracePaths(value,needle){
+  const hits=[]; const seen=new WeakSet();
+  const walk=(v,path)=>{if(v===null||v===undefined)return;if(typeof v==="string"){if(!needle||v.includes(needle))hits.push(path.join("."));return;}if(typeof v!=="object")return;if(seen.has(v))return;seen.add(v);if(Array.isArray(v)){v.forEach((x,i)=>walk(x,path.concat(`[${i}]`)));return;}Object.entries(v).forEach(([k,x])=>walk(x,path.concat(k)));};
+  walk(value,[]);return hits.slice(0,200);
+}
+function __traceWrite(event,data){try{if(!__rendererTraceState.file)return;fs.appendFileSync(__rendererTraceState.file,JSON.stringify({ts:new Date().toISOString(),event,...data})+"\n");}catch(e){console.error("renderer trace failed",e.message);}}
+const __resolveExportResearch=resolveExportResearch;
+resolveExportResearch=function(source){const marker=__rendererTraceState.request?.marker||"ROBOT-EVIDENCE-";__traceWrite("resolve.input",{hash:__traceHash(source),keys:Object.keys(source||{}),marker_paths:__tracePaths(source,marker)});const out=__resolveExportResearch(source);__traceWrite("resolve.output",{hash:__traceHash(out),keys:Object.keys(out||{}),marker_paths:__tracePaths(out,marker),post_meeting_length:String(out?.post_meeting_intelligence||"").length});return out;};
+const __buildDoc=buildDoc;
+buildDoc=function(result,meta){const marker=__rendererTraceState.request?.marker||"ROBOT-EVIDENCE-";__traceWrite("buildDoc.input",{hash:__traceHash(result),keys:Object.keys(result||{}),marker_paths:__tracePaths(result,marker),post_meeting_length:String(result?.post_meeting_intelligence||"").length});return __buildDoc(result,meta);};
+const __buildPpt=buildPpt;
+buildPpt=function(result,meta){const marker=__rendererTraceState.request?.marker||"ROBOT-EVIDENCE-";__traceWrite("buildPpt.input",{hash:__traceHash(result),keys:Object.keys(result||{}),marker_paths:__tracePaths(result,marker),post_meeting_length:String(result?.post_meeting_intelligence||"").length});return __buildPpt(result,meta);};
 module.exports=function register(app,db,rootDir){
+ const traceDir=path.join(rootDir,"..","..","robot-results","renderer-trace");fs.mkdirSync(traceDir,{recursive:true});
+ __rendererTraceState.file=path.join(traceDir,"renderer-trace.jsonl");
+ app.use("/api/research-exports",(req,res,next)=>{const body=req.body||{};const raw=JSON.stringify(body);const match=raw.match(/ROBOT-EVIDENCE-[0-9-]+/);__rendererTraceState.request={call_prep_id:body.call_prep_id||null,marker:match?match[0]:"ROBOT-EVIDENCE-"};__traceWrite("request",{call_prep_id:body.call_prep_id||null,body_hash:__traceHash(body),body_keys:Object.keys(body),marker:__rendererTraceState.request.marker,marker_paths:__tracePaths(body,__rendererTraceState.request.marker)});res.on("finish",()=>__traceWrite("response",{status:res.statusCode,call_prep_id:body.call_prep_id||null}));next();});
  const outDir=path.join(rootDir,"exports");fs.mkdirSync(outDir,{recursive:true});app.use("/exports",require("express").static(outDir));
  db.exec(`CREATE TABLE IF NOT EXISTS research_exports(id INTEGER PRIMARY KEY AUTOINCREMENT,call_prep_id INTEGER,partner_name TEXT,report_path TEXT,deck_path TEXT,created_date TEXT DEFAULT CURRENT_TIMESTAMP);`);
- app.post("/api/research-exports",async(req,res)=>{try{const b=req.body||{},result=resolveExportResearch(b.result||b),partner=safe(b.partner_name||result.partner_name||"Partner"),stamp=Date.now(),reportName=`${partner}_Black_Duck_Strategic_Partner_Account_Plan_${stamp}.docx`,deckName=`${partner}_Black_Duck_Executive_Partner_Strategy_${stamp}.pptx`;const reportPath=path.join(outDir,reportName),deckPath=path.join(outDir,deckName),meta={partner,presenter:b.presenter||"Justin Naughton"};const doc=buildDoc(result,meta);fs.writeFileSync(reportPath,await Packer.toBuffer(doc));const ppt=buildPpt(result,meta);await ppt.writeFile({fileName:deckPath});const r=db.prepare("INSERT INTO research_exports(call_prep_id,partner_name,report_path,deck_path) VALUES(?,?,?,?)").run(b.call_prep_id||null,partner,reportName,deckName);res.json({id:Number(r.lastInsertRowid),report_url:"/exports/"+encodeURIComponent(reportName),deck_url:"/exports/"+encodeURIComponent(deckName),report_name:reportName,deck_name:deckName});}catch(e){res.status(500).json({error:e.message});}});
+ app.post("/api/research-exports",async(req,res)=>{try{const b=req.body||{},callPrepId=Number(b.call_prep_id||0),row=callPrepId?db.prepare("SELECT result_json FROM call_prep_results WHERE id=?").get(callPrepId):null,stored=row&&row.result_json?JSON.parse(row.result_json):null,authoritative=stored?{...stored,...(b.result||{}),partner_name:b.partner_name||(b.result||{}).partner_name}:b.result||b,result=resolveExportResearch(authoritative)/* BLACKDUCK_EXPORT_REQUEST_PRECEDENCE_V22_3_2_8 */,partner=safe(b.partner_name||result.partner_name||"Partner"),stamp=Date.now(),reportName=`${partner}_Black_Duck_Strategic_Partner_Account_Plan_${stamp}.docx`,deckName=`${partner}_Black_Duck_Executive_Partner_Strategy_${stamp}.pptx`;const reportPath=path.join(outDir,reportName),deckPath=path.join(outDir,deckName),meta={partner,presenter:b.presenter||"Justin Naughton"};const doc=buildDoc(result,meta);fs.writeFileSync(reportPath,await Packer.toBuffer(doc));const ppt=buildPpt(result,meta);await ppt.writeFile({fileName:deckPath});const r=db.prepare("INSERT INTO research_exports(call_prep_id,partner_name,report_path,deck_path) VALUES(?,?,?,?)").run(b.call_prep_id||null,partner,reportName,deckName);res.json({id:Number(r.lastInsertRowid),report_url:"/exports/"+encodeURIComponent(reportName),deck_url:"/exports/"+encodeURIComponent(deckName),report_name:reportName,deck_name:deckName});}catch(e){res.status(500).json({error:e.message});}});
  app.get("/api/research-exports",(req,res)=>res.json(db.prepare("SELECT * FROM research_exports ORDER BY id DESC").all().map(x=>({...x,report_url:"/exports/"+encodeURIComponent(x.report_path),deck_url:"/exports/"+encodeURIComponent(x.deck_path)}))));
 };
+
+
+
+
 
 
 
