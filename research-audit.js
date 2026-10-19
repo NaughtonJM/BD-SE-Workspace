@@ -1,8 +1,8 @@
-﻿function strip(v){return String(v||"").replace(/^```json\s*/i,"").replace(/\s*```$/i,"").trim()}
+function strip(v){return String(v||"").replace(/^```json\s*/i,"").replace(/\s*```$/i,"").trim()}
 function decodeHtmlEntities(value){return String(value||"").replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&quot;/gi,'\"').replace(/&#39;/gi,"'").replace(/&#(\d+);/g,(_,n)=>String.fromCharCode(Number(n)))}
 function normalizeRichContext(value){
  let text=String(value||"");
- text=text.replace(/<br\s*\/?\s*>/gi,"\n").replace(/<\/(p|div|li|h[1-6]|tr)>/gi,"\n").replace(/<li[^>]*>/gi,"• ").replace(/<h[1-6][^>]*>/gi,"\n").replace(/<[^>]+>/g,"");
+ text=text.replace(/<br\s*\/?\s*>/gi,"\n").replace(/<\/(p|div|li|h[1-6]|tr)>/gi,"\n").replace(/<li[^>]*>/gi,"â€¢ ").replace(/<h[1-6][^>]*>/gi,"\n").replace(/<[^>]+>/g,"");
  text=decodeHtmlEntities(text).replace(/\r/g,"").replace(/[ \t]+\n/g,"\n").replace(/\n[ \t]+/g,"\n").replace(/\n{3,}/g,"\n\n").trim();
  const lines=text.split("\n").map(x=>x.trim()).filter((x,i,a)=>x||i===0||a[i-1]);
  return lines.join("\n");
@@ -481,11 +481,59 @@ const RESEARCH_SHAPE=`{
  "unresolved_questions":[""]
 }`;
 
+// Evidence-Bounded Research Pipeline v23
+function evidenceBoundResearch(result,input,subjectName,streamName){
+ const out=result&&typeof result==="object"?JSON.parse(JSON.stringify(result)):{};
+ const trustedUrls=new Set();
+ const scan=v=>{if(Array.isArray(v))return v.forEach(scan);if(v&&typeof v==="object")return Object.values(v).forEach(scan);if(typeof v==="string")for(const m of v.matchAll(/https?:\/\/[^\s"'<>]+/gi))trustedUrls.add(m[0].replace(/[),.;]+$/,""));};
+ scan(input);
+ const trusted=u=>typeof u==="string"&&trustedUrls.has(u.trim());
+ let downgraded=0;
+ const walk=v=>{
+  if(Array.isArray(v))return v.forEach(walk);
+  if(!v||typeof v!=="object")return;
+  const url=String(v.source_url||"").trim(), ok=trusted(url);
+  if(url&&!ok)v.source_url="";
+  if(v.classification==="Verified Fact"&&!ok){v.classification="Assumption";downgraded++;}
+  if(/high|verified/i.test(String(v.confidence||""))&&!ok){v.confidence="Needs verification";downgraded++;}
+  if(v.verification_status&&!ok)v.verification_status="UNVERIFIED";
+  if(v.status&&/active|confirmed|current|awarded|verified/i.test(String(v.status))&&!ok){v.status="Prospective Opportunity";downgraded++;}
+  if(Object.prototype.hasOwnProperty.call(v,"verified_fact_or_context")&&!ok){const x=String(v.verified_fact_or_context||"").trim();if(x&&!/^UNVERIFIED\b/i.test(x))v.verified_fact_or_context=`UNVERIFIED: ${x}`;}
+  Object.entries(v).forEach(([k,x])=>{if(k!=="source_url")walk(x)});
+ };
+ walk(out);
+ if(Array.isArray(out.sources))out.sources=out.sources.filter(s=>trusted(String(s?.url||"")));
+ if(Array.isArray(out.claim_ledger))out.claim_ledger=out.claim_ledger.map(c=>{const x={...c};if(!trusted(String(x.source_url||""))){x.source_url="";if(x.classification==="Verified Fact")x.classification="Assumption";if(/high|verified/i.test(String(x.confidence||"")))x.confidence="Needs verification";}return x;});
+ const evidenceCount=trustedUrls.size;
+ if(evidenceCount===0){
+  const ctx=String(input?.known_context||"").trim();
+  const obj=String(input?.meeting_objective||"").trim();
+  const ctxSentence=ctx?`The supplied meeting context states: "${ctx}".`:"No substantive organization evidence was supplied.";
+  out.executive_summary=`${subjectName} is the named ${streamName} for this meeting. ${ctxSentence} No external source evidence was supplied to this execution, so ownership status, capabilities, contracts, customer relationships, geographic presence, procurement access, and named initiatives remain to be validated. Black Duck alignment is analytical and intended to guide discovery, not to assert facts about ${subjectName}.`;
+  out.decision="Proceed with discovery only. Validate the organization profile, relationships, capabilities, procurement position, and opportunity context before treating the research as account intelligence.";
+  out.why_now=obj?`The current meeting objective is "${obj}." Use the meeting to validate evidence and determine whether a qualified Black Duck motion exists.`:"Use the meeting to validate evidence and determine whether a qualified Black Duck motion exists.";
+  out.partnership_thesis=`A potential Black Duck motion may exist, but it cannot be qualified from the supplied evidence alone. Test the application-security, software-assurance, and software-supply-chain hypotheses directly with ${subjectName}.`;
+ }
+ const qa=Array.isArray(out.qa_findings)?out.qa_findings:[];
+ qa.unshift({finding:`Evidence gate evaluated ${streamName}. Trusted supplied URLs: ${evidenceCount}. Unsupported verified/high-confidence fields downgraded: ${downgraded}.`,status:evidenceCount?"REVIEW REQUIRED":"UNRESOLVED",required_action:evidenceCount?"Confirm every material claim resolves to supplied evidence before customer use.":"Supply authoritative evidence or convert unsupported factual claims into validation questions."});
+ out.qa_findings=qa;
+ const unresolved=Array.isArray(out.unresolved_questions)?out.unresolved_questions:[];
+ if(evidenceCount===0)unresolved.unshift(`What authoritative evidence establishes ${subjectName}'s organizational profile, capabilities, customer relationships, contracts, geographic presence, and procurement access?`);
+ out.unresolved_questions=[...new Set(unresolved.filter(Boolean))];
+ return out;
+}
 const FULL_PARTNER_FRAMEWORK=`You are a senior public-sector channel and alliance strategist with expertise in federal contracting, systems integrators, cybersecurity, application security, software-supply-chain security, DevSecOps, cloud modernization, artificial intelligence, data analytics, defense, intelligence, civilian agencies, and government healthcare.
 
 You have been engaged by Black Duck to develop a strategic partner-channel relationship with the partner named in the user input. Your objective is to determine how Black Duck can help that partner win new public-sector business, strengthen existing programs, reduce delivery and compliance risk, and incorporate Black Duck application-security capabilities into solutions, proposals, contract vehicles, and customer programs. Approach the assignment from the perspective of the Black Duck representative responsible for building and managing the partner relationship. Focus on actionable partner-development intelligence: whom to approach, what value proposition to present, which opportunities to pursue, and how to establish a mutually beneficial go-to-market motion.
 
 RESEARCH STANDARD
+EVIDENCE SUFFICIENCY OVERRIDES COMPLETENESS
+- Never create a factual statement merely to populate a required field or complete a requested section.
+- Partner and prospective-client names are identifiers, not evidence of ownership, capabilities, relationships, contracts, geographic presence, procurement access, certifications, or market position.
+- Supplied meeting context is evidence only for its literal content; do not strengthen it into broader relationship or market claims.
+- Without supporting evidence, use UNVERIFIED or To be validated and create an unresolved question.
+- Unsupported facts are prohibited from executive_summary, decision, why_now, opening, lighthouse, primary_risk, and partnership_thesis.
+
 FINAL RESEARCH QUALITY RULES
 - Customer-specific priorities, programs, initiatives, procurement paths, dates, targets, and named competitors require direct supporting evidence. Otherwise state them as analytical hypotheses or validation questions.
 - Never describe an analytical opportunity as an active customer program.
@@ -615,6 +663,13 @@ Return JSON only using this exact schema: ${RESEARCH_SHAPE}`;
 const FULL_CLIENT_FRAMEWORK=`You are an expert strategy partner in the named prospective client's industry and in cybersecurity, software assurance, data breaches, digital transformation, cloud, AI, data science, digital technologies, operations, quality assurance, client acquisition, retention, and expansion. You have been engaged to assess how Black Duck can enable and support the prospective client's mission, business, and market-expansion goals. Adapt your industry expertise to the actual organization named in the user input. Do not mention Boeing unless Boeing is the named prospective client.
 
 RESEARCH STANDARD
+EVIDENCE SUFFICIENCY OVERRIDES COMPLETENESS
+- Never create a factual statement merely to populate a required field or complete a requested section.
+- Partner and prospective-client names are identifiers, not evidence of ownership, capabilities, relationships, contracts, geographic presence, procurement access, certifications, or market position.
+- Supplied meeting context is evidence only for its literal content; do not strengthen it into broader relationship or market claims.
+- Without supporting evidence, use UNVERIFIED or To be validated and create an unresolved question.
+- Unsupported facts are prohibited from executive_summary, decision, why_now, opening, lighthouse, primary_risk, and partnership_thesis.
+
 Provide precise answers using up-to-date public information only when that information is supplied or genuinely accessible through your execution environment. Do not claim internet or private-data access you do not have. Do not invent answers. Prefer evidence from the prior 12 months when available, while retaining older enduring facts when necessary. Every material fact, number, project, budget, title, date, and quotation requires a direct source URL or must be marked UNVERIFIED. Separate Verified Fact, Analysis, Recommendation, Assumption, Prospective Opportunity, and Unresolved Question.
 
 STEP 1 - STRATEGIC RELATIONSHIP
@@ -826,11 +881,14 @@ module.exports=function(app,db){
    if(!partner||!client)return res.status(400).json({error:"Partner and prospective client are required."});
    const original=JSON.stringify(input,null,2);
    const partnerUser=`NAMED PARTNER: ${partner}\nNAMED PROSPECTIVE CLIENT: ${client}\nBLACK DUCK PRESENTER: ${input.presenter||"Justin Naughton"}\n\nMEETING INPUT AND SUPPLIED EVIDENCE:\n${original}`;
-   const partnerResearch=await ask(key,model,FULL_PARTNER_FRAMEWORK,partnerUser);
+   const partnerResearchRaw=await ask(key,model,FULL_PARTNER_FRAMEWORK,partnerUser);
+   const partnerResearch=evidenceBoundResearch(partnerResearchRaw,input,partner,"partner");
    const clientUser=`NAMED PROSPECTIVE CLIENT: ${client}\nPARTNER INVOLVED: ${partner}\nBLACK DUCK PRESENTER: ${input.presenter||"Justin Naughton"}\n\nMEETING INPUT AND SUPPLIED EVIDENCE:\n${original}`;
-   const clientResearch=await ask(key,model,FULL_CLIENT_FRAMEWORK,clientUser);
+   const clientResearchRaw=await ask(key,model,FULL_CLIENT_FRAMEWORK,clientUser);
+   const clientResearch=evidenceBoundResearch(clientResearchRaw,input,client,"prospective client");
    const reconcileUser=`ORIGINAL MEETING INPUT:\n${original}\n\nFULL PARTNER-CHANNEL RESEARCH:\n${JSON.stringify(partnerResearch,null,2)}\n\nFULL PROSPECTIVE-CLIENT RESEARCH:\n${JSON.stringify(clientResearch,null,2)}`;
-   const combined=await ask(key,model,RECONCILIATION_FRAMEWORK,reconcileUser);
+   const combinedRaw=await ask(key,model,RECONCILIATION_FRAMEWORK,reconcileUser);
+   const combined=evidenceBoundResearch(combinedRaw,input,partner+" / "+client,"reconciled partner-client research");
    const callUser=`ORIGINAL MEETING INPUT:\n${original}\n\nFULL PARTNER RESEARCH:\n${JSON.stringify(partnerResearch,null,2)}\n\nFULL CLIENT RESEARCH:\n${JSON.stringify(clientResearch,null,2)}\n\nRECONCILED RESEARCH:\n${JSON.stringify(combined,null,2)}`;
    const call=await ask(key,model,CALL_FRAMEWORK,callUser);
    const q=db.prepare("INSERT INTO call_prep_results(partner_name,account_name,input_json,result_json,research_json,partner_research_json,client_research_json,combined_research_json,model) VALUES(?,?,?,?,?,?,?,?,?)").run(partner,client,JSON.stringify(input),JSON.stringify(call),JSON.stringify(combined),JSON.stringify(partnerResearch),JSON.stringify(clientResearch),JSON.stringify(combined),model);
