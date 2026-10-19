@@ -84,13 +84,24 @@ require('./v20-content-quality')(app, db); // V20_PROPER
 require('./admin-llm-config-v20.9.1')(app); // ADMIN_LLM_CONFIG_API_V20_9_1
 
 
+/* BLACKDUCK_UNIFIED_EVIDENCE_CORE_V21_1_2 */
+require('./unified-evidence-core-v21.1.2')(app, db);
+
+
+/* BLACKDUCK_CONTENT_FRESHNESS_V21_1_5 */
+require('./content-freshness-v21.1.5.js')(app, db);
 app.use((req,res) => {
   if (req.path.startsWith("/api/")) return res.status(404).json({error:"API endpoint not found"});
   res.sendFile(path.join(__dirname,"frontend","index.html"));
 });
 require('./admin-database-status-v21.0.0')(app); // ADMIN_DATABASE_STATUS_API_V21_0_0
 
+/* BLACKDUCK_UNIFIED_EVIDENCE_CORE_V21_1_2 */
+require('./unified-evidence-core-v21.1.2')(app, db);
+
 app.listen(PORT,"127.0.0.1",() => console.log("Black Duck SE Workspace running on port " + PORT));
+
+
 
 
 

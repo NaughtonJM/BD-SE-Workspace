@@ -1,3 +1,4 @@
+/* BLACKDUCK_UNIFIED_EVIDENCE_CORE_V21_1_2 */
 "use strict";
 
 module.exports = function conversationIntelligenceV18(app, db) {
@@ -180,7 +181,9 @@ module.exports = function conversationIntelligenceV18(app, db) {
   function analyze(payload) {
     const sourceText = text(payload.sourceText).trim();
     const reportContext = text(payload.reportContext);
-    const corpus = `${sourceText}\n${reportContext}`;
+    const unifiedEvidence = payload.unifiedEvidence || {};
+    const unifiedEvidenceText = JSON.stringify(unifiedEvidence);
+    const corpus = `${sourceText}\n${reportContext}\n${unifiedEvidenceText}`;
     const matches = RULES.filter(rule => rule.match.test(corpus));
     const selected = matches.length ? matches : [RULES.find(rule => rule.id === "business_value")];
 
@@ -212,6 +215,8 @@ module.exports = function conversationIntelligenceV18(app, db) {
     return {
       marker: MARKER,
       analyzedAt: new Date().toISOString(),
+      evidenceHash: text(payload.evidenceHash),
+      inputDatasets: Array.isArray(payload.inputDatasets) ? payload.inputDatasets : [],
       engagementType,
       themes,
       capabilityAreas: uniq(selected.map(rule => rule.capability)),
@@ -238,7 +243,19 @@ module.exports = function conversationIntelligenceV18(app, db) {
   app.post("/api/conversation-intelligence-v18/analyze", (req, res) => {
     const sourceText = text(req.body?.sourceText).trim();
     if (!sourceText) return res.status(400).json({ error: "Conversation notes or transcript text is required." });
-    res.json({ success: true, analysis: analyze(req.body || {}) });
+    const callPrepId = Number(req.body?.callPrepId || req.body?.reportContext?.id || req.body?.reportContext?.callPrepId || 0);
+    let evidence = {};
+    let evidenceHash = "";
+    let inputDatasets = [];
+    if (callPrepId > 0 && app.locals.bdUnifiedEvidence) {
+      const snapshot = app.locals.bdUnifiedEvidence.snapshot(callPrepId);
+      evidence = snapshot.evidence;
+      evidenceHash = snapshot.evidenceHash;
+      inputDatasets = snapshot.inputDatasets;
+      app.locals.bdUnifiedEvidence.mark(callPrepId, "current", evidenceHash);
+    }
+    const analysis = analyze({ ...(req.body || {}), sourceText, unifiedEvidence: evidence, evidenceHash, inputDatasets });
+    res.type("application/json; charset=utf-8").json({ success: true, marker: "BLACKDUCK_UNIFIED_ANALYSIS_V21_1_2", callPrepId, evidenceHash, inputDatasets, analysis });
   });
 
   app.get("/api/conversation-intelligence-v18/:id", (req, res) => {

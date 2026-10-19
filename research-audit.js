@@ -8,9 +8,452 @@ function normalizeRichContext(value){
  return lines.join("\n");
 }
 function normalizeMeetingInput(input){const out={...(input||{})};for(const key of ["meeting_objective","attendees","known_context","constraints","additional_input"])if(out[key]!=null)out[key]=normalizeRichContext(out[key]);return out}
+
+/* BLACKDUCK_UPSTREAM_FIELD_MAPPING_V22_1_1 */
+function normalizeResearchResult(input){
+  const result=(input && typeof input==="object" && !Array.isArray(input)) ? {...input} : {};
+  const arr=v=>Array.isArray(v)?v:[];
+  const clean=v=>{
+    if(v===undefined||v===null)return "";
+    const s=String(v).trim();
+    return /^(undefined|null)$/i.test(s)?"":s;
+  };
+  const first=(...values)=>{
+    for(const value of values){const s=clean(value);if(s)return s;}
+    return "";
+  };
+  const uniq=values=>[...new Set(values.map(clean).filter(Boolean))];
+  const rows=(primary,...alternates)=>{
+    const source=arr(result[primary]).length?arr(result[primary]):alternates.flatMap(k=>arr(result[k]));
+    return source.filter(x=>x&&typeof x==="object").map(x=>({...x}));
+  };
+
+  result.corporate_profile=rows("corporate_profile","company_profile","partner_profile","federal_market_profile").map(x=>({
+    ...x,
+    dimension:first(x.dimension,x.title,x.category,x.name),
+    verified_fact_or_context:first(x.verified_fact_or_context,x.verified_context,x.context,x.fact,x.description,x.summary),
+    analysis:first(x.analysis,x.channel_implication,x.implication,x.relevance,x.recommendation),
+    confidence:first(x.confidence,x.confidence_level)
+  }));
+
+  result.trends=rows("trends","market_trends","forward_looking_trends").map(x=>({
+    ...x,
+    headline:first(x.headline,x.trend,x.title,x.name,x.development),
+    significance:first(x.significance,x.why_it_matters,x.impact,x.description),
+    affected_markets:first(x.affected_markets,x.markets,x.affected_environment,x.agencies),
+    partnership_implication:first(x.partnership_implication,x.channel_implication,x.implication,x.recommendation)
+  }));
+
+  result.value_proposition=rows("value_proposition","value_propositions","business_case","mutual_business_case").map(x=>({
+    ...x,
+    capability:first(x.capability,x.title,x.name,x.offering),
+    verified_basis:first(x.verified_basis,x.basis,x.evidence,x.context),
+    partner_or_client_value:first(x.partner_or_client_value,x.partner_value,x.client_value,x.customer_value,x.subject_value,x.benefit),
+    commercial_or_mission_impact:first(x.commercial_or_mission_impact,x.commercial_impact,x.mission_impact,x.business_impact,x.customer_outcome,x.outcome)
+  }));
+
+  result.stakeholders=rows("stakeholders","stakeholder_map","key_stakeholders").map(x=>({
+    ...x,
+    stakeholder:first(x.stakeholder,x.name,x.person,x.role,x.title_or_type),
+    title_or_type:first(x.title_or_type,x.title,x.role,x.type),
+    verification_status:first(x.verification_status,x.status,x.validation_status,"To be validated"),
+    influence:first(x.influence,x.influence_level),
+    interest:first(x.interest,x.interest_level),
+    value_proposition:first(x.value_proposition,x.partner_value,x.client_value,x.relevance,x.why_it_matters,x.benefit),
+    approach:first(x.approach,x.engagement_approach,x.recommendation,x.next_step),
+    next_step:first(x.next_step,x.action,x.approach)
+  })).map(x=>{
+    if(/^(John Smith|Jane Doe|John Doe)$/i.test(clean(x.stakeholder)))x.stakeholder="Stakeholder to be confirmed";
+    return x;
+  });
+
+  result.challenges=rows("challenges","material_challenges").map(x=>({
+    ...x,
+    title:first(x.title,x.challenge,x.name),
+    affected_market:first(x.affected_market,x.affected_environment,x.environment,x.market),
+    mission_environment:first(x.mission_environment,x.affected_environment,x.environment),
+    black_duck_opening:first(x.black_duck_opening,x.opening,x.entry_point,x.recommendation,x.response)
+  }));
+
+  result.opportunities=rows("opportunities","opportunity_map","contracts").map(x=>({
+    ...x,
+    name:first(x.name,x.opportunity,x.title),
+    agency_or_customer:first(x.agency_or_customer,x.agency,x.customer,x.account),
+    status:first(x.status,x.stage,x.qualification),
+    appsec_need:first(x.appsec_need,x.appsec_need_or_entry,x.need,x.entry_point,x.black_duck_entry),
+    black_duck_entry:first(x.black_duck_entry,x.entry_point,x.appsec_need,x.recommendation)
+  }));
+
+  result.partnership_framework=rows("partnership_framework","partnership_themes","solution_model").map(x=>({
+    ...x,
+    theme:first(x.theme,x.title,x.name),
+    joint_offering:first(x.joint_offering,x.offering,x.solution,x.recommendation),
+    subject_benefit:first(x.subject_benefit,x.partner_value,x.partner_or_client_value,x.benefit),
+    customer_outcome:first(x.customer_outcome,x.commercial_or_mission_impact,x.mission_impact,x.outcome)
+  }));
+
+  result.channel_plan=rows("channel_plan","action_plan","roadmap").map(x=>({
+    ...x,
+    desired_outcome:first(x.desired_outcome,x.outcome,x.success_criterion,x.measure),
+    success_criterion:first(x.success_criterion,x.desired_outcome,x.measure,x.outcome)
+  }));
+
+  result.meeting_agenda=rows("meeting_agenda","agenda").map(x=>({
+    ...x,
+    topic:first(x.topic,x.agenda_item,x.title),
+    desired_output:first(x.desired_output,x.outcome,x.success_criterion)
+  }));
+
+  result.executive_themes=rows("executive_themes","discussion_themes").map(x=>({
+    ...x,
+    headline:first(x.headline,x.title,x.theme),
+    why_it_matters:first(x.why_it_matters,x.significance,x.impact,x.value_proposition)
+  }));
+
+  result.headwinds_tailwinds=rows("headwinds_tailwinds","tailwinds_headwinds").map(x=>({
+    ...x,
+    joint_action:first(x.joint_action,x.action,x.recommendation,x.black_duck_role)
+  }));
+
+  result.competitive_landscape=rows("competitive_landscape","competitors","partner_landscape").map(x=>({
+    ...x,
+    entity_or_risk:first(x.entity_or_risk,x.examples_risk,x.entity,x.risk,x.examples),
+    differentiation_or_complementarity:first(x.differentiation_or_complementarity,x.differentiation,x.coexistence,x.response,x.recommendation)
+  }));
+
+  // Keep arrays compact and avoid downstream duplicate joins without inventing content.
+  for(const key of ["corporate_profile","trends","value_proposition","stakeholders","challenges","opportunities","partnership_framework","channel_plan","meeting_agenda","executive_themes","headwinds_tailwinds","competitive_landscape"]){
+    result[key]=arr(result[key]).filter(row=>Object.values(row).some(v=>clean(v)));
+  }
+  result._field_mapping={version:"22.1.1",normalized:true};
+  return result;
+}
+
+/* BLACKDUCK_RESEARCH_QUALITY_GUARD_V22_2_0 */
+function applyResearchQualityGuard(input){
+  const result=(input&&typeof input==="object"&&!Array.isArray(input))?input:{};
+  const arrays=["corporate_profile","challenges","trends","opportunities","swot","value_proposition","partnership_framework","stakeholders","channel_plan","meeting_agenda","executive_themes","headwinds_tailwinds","competitive_landscape","account_strategy","immediate_actions","sources","claim_ledger","qa_findings"];
+  const empty=value=>value===undefined||value===null||String(value).trim()==="";
+  const url=value=>/^https?:\/\//i.test(String(value||"").trim());
+  const clean=value=>String(value??"").trim().replace(/\bblack Duck\b/g,"Black Duck").replace(/\bsBOM\b/g,"SBOM").replace(/\bsCA\b/g,"SCA").replace(/\bfY(\d{2,4})\b/g,"FY$1").replace(/\bq([1-4])\b/g,"Q$1");
+  const confidence=row=>String(row?.confidence||"").trim().toLowerCase();
+  const hasEvidence=row=>url(row?.source_url)||(!empty(row?.evidence)&&!/^(unverified|to be validated)$/i.test(String(row.evidence).trim()))||(!empty(row?.exact_quote)&&!/^(unverified|to be validated)$/i.test(String(row.exact_quote).trim()));
+
+  for(const key of arrays){
+    if(!Array.isArray(result[key]))result[key]=[];
+    result[key]=result[key].filter(row=>{
+      if(typeof row==="string")return clean(row)!=="";
+      if(!row||typeof row!=="object")return false;
+      for(const field of Object.keys(row)){
+        if(typeof row[field]==="string")row[field]=clean(row[field]);
+      }
+      return Object.values(row).some(value=>!empty(value));
+    });
+  }
+
+  // Never present unsupported claims as highly verified.
+  for(const key of arrays){
+    for(const row of result[key]){
+      if(!row||typeof row!=="object")continue;
+      if(!hasEvidence(row)&&["high","verified","high confidence"].includes(confidence(row))){
+        row.confidence="Needs verification";
+      }
+      if(row.source_url&&!url(row.source_url))row.source_url="";
+      if(row.verification_status&&/verified/i.test(row.verification_status)&&!hasEvidence(row))row.verification_status="To be validated";
+    }
+  }
+
+  // Opportunities with no direct evidence must remain explicitly analytical.
+  for(const row of result.opportunities){
+    if(!hasEvidence(row)){
+      row.qualification=row.qualification||"Analytical";
+      row.status=row.status||"Prospective";
+    }
+  }
+
+  // Named stakeholders require a source; otherwise preserve only a role label.
+  for(const row of result.stakeholders){
+    if(!hasEvidence(row)&&row.stakeholder&&/\s/.test(row.stakeholder)&&!/(lead|director|executive|officer|manager|stakeholder|team|practice|agency)/i.test(row.stakeholder)){
+      row.stakeholder=row.title_or_type||"Stakeholder to be confirmed";
+      row.verification_status="To be validated";
+    }
+  }
+
+  // Remove unusable source placeholders instead of printing fake citations.
+  result.sources=result.sources.filter(row=>row&&typeof row==="object"&&url(row.url)&&!/^unverified$/i.test(String(row.title||"").trim()));
+
+  const findings=[];
+  const required={
+    corporate_profile:["dimension","verified_fact_or_context","analysis"],
+    trends:["headline","significance","affected_markets","partnership_implication"],
+    value_proposition:["capability","partner_or_client_value","commercial_or_mission_impact"],
+    stakeholders:["stakeholder","influence","value_proposition","approach"],
+    opportunities:["name","agency_or_customer","scope","appsec_need","motion"],
+    executive_themes:["headline","why_it_matters"],
+    headwinds_tailwinds:["type","development","effect","joint_action"],
+    competitive_landscape:["category","entity_or_risk","differentiation_or_complementarity"]
+  };
+  for(const [section,fields] of Object.entries(required)){
+    for(const [index,row] of result[section].entries()){
+      const missing=fields.filter(field=>empty(row?.[field]));
+      if(missing.length)findings.push({finding:`${section}[${index}] missing ${missing.join(", ")}`,status:"Needs verification",required_action:"Validate or complete before external use"});
+    }
+  }
+  result.qa_findings=[...result.qa_findings,...findings];
+  result.research_quality={version:"22.2.0",status:findings.length?"Needs verification":"Structurally complete",finding_count:findings.length};
+  return result;
+}
+
+/* BLACKDUCK_RESEARCH_INTEGRITY_ENGINE_V22_3_0 */
+function applyResearchIntegrityV2230(input){
+  const result=(input&&typeof input==="object"&&!Array.isArray(input))?input:{};
+  const sections=["corporate_profile","challenges","trends","opportunities","swot","value_proposition","partnership_framework","stakeholders","channel_plan","meeting_agenda","executive_themes","headwinds_tailwinds","competitive_landscape","account_strategy","immediate_actions","sources","claim_ledger","qa_findings"];
+  const empty=v=>v===undefined||v===null||String(v).trim()==="";
+  const placeholder=v=>/^(unverified|unknown|none|n\/a|null|undefined|to be validated)$/i.test(String(v||"").trim());
+  const validUrl=v=>/^https?:\/\/[^\s]+$/i.test(String(v||"").trim());
+  const clean=v=>String(v??"")
+    .trim()
+    .replace(/\bblack Duck\b/g,"Black Duck")
+    .replace(/\bdHA\b/g,"DHA")
+    .replace(/\brMF\b/g,"RMF")
+    .replace(/\bsBOM\b/g,"SBOM")
+    .replace(/\bsCA\b/g,"SCA")
+    .replace(/\bfY(?=\d)/g,"FY")
+    .replace(/\bq([1-4])\b/g,"Q$1")
+    .replace(/Black Duck contributes provide\b/gi,"Black Duck contributes by providing")
+    .replace(/Black Duck should respond by provide\b/gi,"Black Duck should respond by providing")
+    .replace(/Black Duck should respond by leverage\b/gi,"Black Duck should respond by leveraging")
+    .replace(/Black Duck should respond by position\b/gi,"Black Duck should respond by positioning")
+    .replace(/Black Duck should respond by use\b/gi,"Black Duck should respond by using")
+    .replace(/Black Duck can enter by provide\b/gi,"Black Duck can enter by providing")
+    .replace(/The first action is identify\b/gi,"The first action is to identify")
+    .replace(/The first action is demonstrate\b/gi,"The first action is to demonstrate")
+    .replace(/Success should be measured through dHA\b/g,"Success should be measured by DHA")
+    .replace(/\s+/g," ");
+
+  const normalize=value=>{
+    if(Array.isArray(value))return value.map(normalize);
+    if(!value||typeof value!=="object")return typeof value==="string"?clean(value):value;
+    for(const key of Object.keys(value))value[key]=normalize(value[key]);
+    return value;
+  };
+  normalize(result);
+
+  for(const section of sections){
+    if(!Array.isArray(result[section]))result[section]=[];
+    result[section]=result[section].filter(row=>{
+      if(typeof row==="string")return !empty(row);
+      return row&&typeof row==="object"&&Object.values(row).some(v=>!empty(v));
+    });
+  }
+
+  const directSource=row=>Boolean(row&&validUrl(row.source_url));
+  const evidence=row=>Boolean(row&&[row.evidence,row.exact_quote,row.verified_basis,row.verified_fact_or_context].some(v=>!empty(v)&&!placeholder(v)));
+  const score=row=>directSource(row)&&evidence(row)?"High":directSource(row)||evidence(row)?"Medium":"Needs verification";
+  const scored=["corporate_profile","challenges","trends","opportunities","value_proposition","stakeholders","executive_themes","headwinds_tailwinds","competitive_landscape","account_strategy"];
+
+  for(const section of scored){
+    for(const row of result[section]){
+      if(!row||typeof row!=="object")continue;
+      row.confidence=score(row);
+      if(row.verification_status&&/verified/i.test(row.verification_status)&&!directSource(row))row.verification_status="To be validated";
+    }
+  }
+
+  for(const row of result.opportunities){
+    if(!row||typeof row!=="object")continue;
+    row.classification=directSource(row)&&evidence(row)?"Verified Opportunity":directSource(row)||evidence(row)?"Supported Opportunity":"Analytical Opportunity";
+    if(row.classification==="Analytical Opportunity"){
+      row.status=row.status||"Prospective";
+      row.qualification=row.qualification||"Analytical";
+    }
+    if(row.period&&(!directSource(row)||placeholder(row.period)))row.period="To be validated";
+    if(row.timing&&(!directSource(row)||placeholder(row.timing)))row.timing="To be validated";
+  }
+
+  const role=/\b(lead|director|executive|officer|manager|architect|engineer|stakeholder|team|practice|agency|office|program)\b/i;
+  for(const row of result.stakeholders){
+    const name=String(row?.stakeholder||"").trim();
+    if(name.includes(" ")&&!role.test(name)&&!directSource(row)){
+      row.stakeholder=row.title_or_type||"Stakeholder to be confirmed";
+      row.verification_status="To be validated";
+      row.confidence="Needs verification";
+    }
+  }
+
+  const seen=new Set();
+  result.sources=result.sources.filter(row=>{
+    if(!row||typeof row!=="object"||!validUrl(row.url)||empty(row.title)||placeholder(row.title)||placeholder(row.publisher))return false;
+    const key=String(row.url).trim().toLowerCase();
+    if(seen.has(key))return false;
+    seen.add(key);return true;
+  });
+
+  const required={
+    corporate_profile:["dimension","verified_fact_or_context","analysis"],
+    challenges:["title","description","affected_market","black_duck_opening"],
+    trends:["headline","significance","affected_markets","partnership_implication"],
+    opportunities:["name","agency_or_customer","scope","appsec_need","black_duck_entry","motion"],
+    value_proposition:["capability","partner_or_client_value","commercial_or_mission_impact"],
+    stakeholders:["stakeholder","influence","interest","value_proposition","approach"],
+    executive_themes:["headline","why_it_matters"],
+    headwinds_tailwinds:["type","development","effect","joint_action","measure"],
+    competitive_landscape:["category","entity_or_risk","differentiation_or_complementarity"]
+  };
+  const findings=[];
+  for(const [section,fields] of Object.entries(required)){
+    for(const [index,row] of result[section].entries()){
+      const missing=fields.filter(field=>empty(row?.[field]));
+      if(missing.length)findings.push({finding:`${section}[${index}] missing ${missing.join(", ")}`,status:"Needs verification",required_action:"Complete or validate before external use"});
+    }
+  }
+
+  const rows=scored.flatMap(section=>result[section]);
+  const verified=rows.filter(row=>score(row)==="High").length;
+  const supported=rows.filter(row=>score(row)==="Medium").length;
+  const analytical=result.opportunities.filter(row=>row.classification==="Analytical Opportunity").length;
+  const assumptions=rows.filter(row=>/assumption/i.test(String(row?.classification||row?.qualification||""))).length;
+  const unresolved=Array.isArray(result.unresolved_questions)?result.unresolved_questions.filter(v=>!empty(v)).length:0;
+  const total=verified+supported+analytical+assumptions;
+  let quality=total?Math.round((verified*100+supported*65+analytical*35+assumptions*15)/total):0;
+  quality=Math.max(0,Math.min(100,quality-Math.min(findings.length*2,30)));
+
+  result.qa_findings=[...result.qa_findings,...findings];
+  result.research_quality={version:"22.3.0",verified_claims:verified,supported_claims:supported,analytical_claims:analytical,assumptions,unresolved_questions:unresolved,source_count:result.sources.length,integrity_findings:findings.length,quality_score:quality,status:quality>=80?"Strong":quality>=60?"Usable with validation":"Needs research"};
+  return result;
+}
+
+/* BLACKDUCK_FINAL_RESEARCH_QUALITY_FIX_V22_3_1 */
+function applyResearchFinalizerV2231(input){
+  const result=(input&&typeof input==="object"&&!Array.isArray(input))?input:{};
+  const empty=v=>v===undefined||v===null||String(v).trim()==="";
+  const placeholder=v=>/^(unverified|unknown|none|n\/a|null|undefined|to be validated)$/i.test(String(v||"").trim());
+  const validUrl=v=>/^https?:\/\/[^\s]+$/i.test(String(v||"").trim());
+  const clean=v=>String(v??"")
+    .replace(/\bblack\s+duck\b/gi,"Black Duck")
+    .replace(/\bdha\b/gi,"DHA")
+    .replace(/\brmf\b/gi,"RMF")
+    .replace(/\bsbom\b/gi,"SBOM")
+    .replace(/\bsca\b/gi,"SCA")
+    .replace(/\bdevsecops\b/gi,"DevSecOps")
+    .replace(/\bguidepoint security\b/gi,"GuidePoint Security")
+    .replace(/\bjustin naughton\b/gi,"Justin Naughton")
+    .replace(/\bfy\s*(\d{2,4})\b/gi,"FY$1")
+    .replace(/\bq\s*([1-4])\b/gi,"Q$1")
+    .replace(/\bcontributes provide\b/gi,"contributes by providing")
+    .replace(/\bcan enter by provide\b/gi,"can enter by providing")
+    .replace(/\bcan enter by demonstrate\b/gi,"can enter by demonstrating")
+    .replace(/\bshould respond by provide\b/gi,"should respond by providing")
+    .replace(/\bshould respond by leverage\b/gi,"should respond by leveraging")
+    .replace(/\bshould respond by position\b/gi,"should respond by positioning")
+    .replace(/\bshould respond by use\b/gi,"should respond by using")
+    .replace(/\bshould respond by conduct\b/gi,"should respond by conducting")
+    .replace(/\bshould respond by utilize\b/gi,"should respond by utilizing")
+    .replace(/\bthe first action is identify\b/gi,"the first action is to identify")
+    .replace(/\bthe first action is validate\b/gi,"the first action is to validate")
+    .replace(/\bthe first action is demonstrate\b/gi,"the first action is to demonstrate")
+    .replace(/\bthe primary business value is ensures\b/gi,"the primary business value is ensuring")
+    .replace(/\bthe expected mission and business impact is improves\b/gi,"the expected mission and business impact is improved")
+    .replace(/\bsuccess should be measured through full\b/gi,"success should be measured by full")
+    .replace(/\bthe recommended joint action is collaborate\b/gi,"the recommended joint action is to collaborate")
+    .replace(/\s+/g," ")
+    .trim();
+  const normalize=value=>{
+    if(Array.isArray(value))return value.map(normalize);
+    if(!value||typeof value!=="object")return typeof value==="string"?clean(value):value;
+    for(const key of Object.keys(value))value[key]=normalize(value[key]);
+    return value;
+  };
+  normalize(result);
+
+  const evidenceFields=row=>[row?.evidence,row?.exact_quote,row?.verified_basis,row?.verified_fact_or_context,row?.evidence_basis];
+  const hasEvidence=row=>evidenceFields(row).some(v=>!empty(v)&&!placeholder(v));
+  const hasSource=row=>validUrl(row?.source_url);
+  const confidence=row=>hasSource(row)&&hasEvidence(row)?"High":hasSource(row)||hasEvidence(row)?"Medium":"Needs verification";
+
+  const arrays=["corporate_profile","challenges","trends","opportunities","swot","value_proposition","partnership_framework","stakeholders","channel_plan","meeting_agenda","executive_themes","headwinds_tailwinds","competitive_landscape","account_strategy","immediate_actions","sources","claim_ledger","qa_findings"];
+  for(const section of arrays)if(!Array.isArray(result[section]))result[section]=[];
+
+  const scored=["corporate_profile","challenges","trends","opportunities","swot","value_proposition","partnership_framework","stakeholders","channel_plan","executive_themes","headwinds_tailwinds","competitive_landscape","account_strategy","immediate_actions"];
+  for(const section of scored){
+    for(const row of result[section]){
+      if(!row||typeof row!=="object")continue;
+      row.confidence=confidence(row);
+      if(!hasSource(row)&&row.verification_status&&/verified/i.test(row.verification_status))row.verification_status="To be validated";
+    }
+  }
+  if(result.strategic_vision&&Array.isArray(result.strategic_vision.pillars)){
+    for(const row of result.strategic_vision.pillars)row.confidence=confidence(row);
+  }
+
+  // Claims about a named customer's priorities are analytical unless directly sourced.
+  const customerPriority=/\b(DHA|customer|agency)\b.*\b(priorit|focus|need|require|plan|initiative)/i;
+  for(const section of ["challenges","trends","opportunities","partnership_framework","executive_themes","headwinds_tailwinds","account_strategy"]){
+    for(const row of result[section]){
+      if(!row||typeof row!=="object"||hasSource(row))continue;
+      for(const key of ["evidence","exact_quote","verified_basis","evidence_basis"]){
+        if(row[key]&&customerPriority.test(row[key])&&!/^Analytical assessment:/i.test(row[key]))row[key]="Analytical assessment: "+row[key];
+      }
+      if(customerPriority.test(JSON.stringify(row)))row.confidence="Needs verification";
+    }
+  }
+
+  // Opportunity integrity: no unsourced program names, dates, vehicles, or certainty.
+  for(const row of result.opportunities){
+    if(!row||typeof row!=="object")continue;
+    if(hasSource(row)&&hasEvidence(row))row.classification="Verified Opportunity";
+    else if(hasSource(row)||hasEvidence(row))row.classification="Supported Opportunity";
+    else row.classification="Analytical Opportunity";
+    if(row.classification!=="Verified Opportunity"){
+      row.status=row.classification;
+      row.period="To be validated";
+      row.timing="To be validated";
+      if(!hasSource(row))row.vehicle_or_path="To be validated";
+    }
+  }
+
+  // Source list contains only usable, unique citations. Source rows themselves are verified metadata.
+  const seen=new Set();
+  result.sources=result.sources.filter(row=>{
+    if(!row||typeof row!=="object"||!validUrl(row.url)||empty(row.title)||placeholder(row.title))return false;
+    const key=String(row.url).trim().toLowerCase();
+    if(seen.has(key))return false;
+    seen.add(key);
+    row.confidence="Verified source metadata";
+    return true;
+  });
+
+  // Avoid unsupported competitive names. Preserve the category and convert the entity to a validation question.
+  for(const row of result.competitive_landscape){
+    if(!row||typeof row!=="object")continue;
+    if(!hasSource(row)&&row.entity_or_risk&&!placeholder(row.entity_or_risk)){
+      row.entity_or_risk="Competitor set to be validated";
+      row.confidence="Needs verification";
+    }
+  }
+
+  // Quantified success measures require evidence; otherwise convert them to directional measures.
+  for(const row of result.headwinds_tailwinds){
+    if(!row||typeof row!=="object"||hasSource(row))continue;
+    if(/\b\d+%|\b\d+\s+(contracts?|days?|systems?|applications?)\b/i.test(String(row.measure||"")))row.measure="Directional improvement; baseline and target to be validated";
+  }
+
+  // Rebuild quality metrics after final enforcement.
+  const rows=scored.flatMap(section=>result[section]).filter(row=>row&&typeof row==="object");
+  const verified=rows.filter(row=>confidence(row)==="High").length;
+  const supported=rows.filter(row=>confidence(row)==="Medium").length;
+  const needs=rows.filter(row=>confidence(row)==="Needs verification").length;
+  const analytical=result.opportunities.filter(row=>row.classification==="Analytical Opportunity").length;
+  const unresolved=Array.isArray(result.unresolved_questions)?result.unresolved_questions.filter(v=>!empty(v)).length:0;
+  const total=Math.max(1,verified+supported+needs);
+  let quality=Math.round((verified*100+supported*65+needs*20)/total);
+  quality=Math.max(0,Math.min(100,quality));
+  result.research_quality={...(result.research_quality||{}),version:"22.3.1",verified_claims:verified,supported_claims:supported,needs_verification_claims:needs,analytical_opportunities:analytical,unresolved_questions:unresolved,source_count:result.sources.length,quality_score:quality,status:quality>=80?"Strong":quality>=60?"Usable with validation":"Needs research"};
+  return result;
+}
 async function ask(key,model,system,user){
  const r=await fetch("https://llm.core.blackduck.com/v1/chat/completions",{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({model,temperature:.12,response_format:{type:"json_object"},messages:[{role:"system",content:system},{role:"user",content:user}]})});
- const raw=await r.text();if(!r.ok)throw new Error(`LLM gateway ${r.status}: ${raw.slice(0,1800)}`);const e=JSON.parse(raw),c=e?.choices?.[0]?.message?.content;if(!c)throw new Error("The LLM returned no content.");return JSON.parse(strip(c));
+ const raw=await r.text();if(!r.ok)throw new Error(`LLM gateway ${r.status}: ${raw.slice(0,1800)}`);const e=JSON.parse(raw),c=e?.choices?.[0]?.message?.content;if(!c)throw new Error("The LLM returned no content.");return applyResearchFinalizerV2231(applyResearchIntegrityV2230(applyResearchQualityGuard(normalizeResearchResult(JSON.parse(strip(c))))));
 }
 const RESEARCH_SHAPE=`{
  "subject_name":"", "research_type":"", "executive_summary":"", "decision":"", "why_now":"", "opening":"", "lighthouse":"", "primary_risk":"", "partnership_thesis":"",
@@ -43,6 +486,71 @@ const FULL_PARTNER_FRAMEWORK=`You are a senior public-sector channel and allianc
 You have been engaged by Black Duck to develop a strategic partner-channel relationship with the partner named in the user input. Your objective is to determine how Black Duck can help that partner win new public-sector business, strengthen existing programs, reduce delivery and compliance risk, and incorporate Black Duck application-security capabilities into solutions, proposals, contract vehicles, and customer programs. Approach the assignment from the perspective of the Black Duck representative responsible for building and managing the partner relationship. Focus on actionable partner-development intelligence: whom to approach, what value proposition to present, which opportunities to pursue, and how to establish a mutually beneficial go-to-market motion.
 
 RESEARCH STANDARD
+FINAL RESEARCH QUALITY RULES
+- Customer-specific priorities, programs, initiatives, procurement paths, dates, targets, and named competitors require direct supporting evidence. Otherwise state them as analytical hypotheses or validation questions.
+- Never describe an analytical opportunity as an active customer program.
+- Do not assign High confidence without both direct evidence and a valid source URL.
+- Do not create numeric success targets unless a baseline and target are supplied or sourced.
+- Sources must directly support the claim for which they are cited; generic home pages are insufficient for specific program claims.
+- Recommendations must use complete, grammatically correct executive prose.
+RESEARCH INTEGRITY REQUIREMENTS
+- Separate verified external facts from Black Duck analysis, recommendations, assumptions, and prospective opportunities.
+- Do not label unsupported statements High confidence or Verified.
+- Every named contract, program, customer priority, person, date, budget, quotation, and award requires a directly supporting source URL.
+- Unsupported opportunities must be labeled Analytical Opportunity or Prospective Opportunity.
+- Do not invent URLs, people, contracts, acquisition vehicles, fiscal periods, or customer priorities.
+- Do not use generic vendor home pages as proof of specific claims.
+- Prefer fewer well-supported findings over many generic findings.
+- Use complete executive prose and correct capitalization for Black Duck, DHA, RMF, SBOM, SCA, FY, and Q1 through Q4.
+- When evidence is unavailable, state the validation question rather than inventing an answer.
+RESEARCH QUALITY AND EVIDENCE RULES
+- Never claim web research occurred unless source content is actually available to this execution.
+- Do not invent contracts, programs, budgets, dates, customer priorities, stakeholder names, quotations, vendors, or URLs.
+- A direct source URL must support every material external fact, named person, date, contract, program, and quoted statement.
+- If evidence is absent, classify the statement as Analysis, Recommendation, Assumption, Prospective Opportunity, or Unresolved Question. Do not label unsupported content High confidence or Verified.
+- Do not use placeholder URLs or generic publisher home pages as proof of a specific claim.
+- Prefer fewer well-supported rows over many generic rows.
+- Separate verified facts from Black Duck recommendations.
+- Use current fiscal periods only when evidence explicitly states them; otherwise omit the period or mark it To be validated.
+- Write concise executive prose. Avoid repetitive claims, malformed capitalization, and fragments such as "provide tools" when a complete recommendation is required.
+BLACKDUCK_MANDATORY_RESEARCH_COMPLETION_V22_1_2
+MANDATORY COMPLETION REQUIREMENTS
+
+Return the exact JSON shape requested. Do not return empty placeholder rows or empty strings for required analytical fields.
+
+For each corporate_profile item, populate:
+- dimension
+- verified_fact_or_context
+- analysis
+- confidence
+Use supplied meeting context when applicable. If no verified external fact is available, label the content UNVERIFIED and provide a useful analytical implication based only on supplied context. Do not invent a source URL.
+
+For each trends item, populate:
+- headline
+- significance
+- affected_markets
+- partnership_implication
+- confidence
+
+For each stakeholder item, populate:
+- stakeholder or role
+- verification_status
+- influence
+- interest
+- value_proposition
+- approach
+- next_step
+Do not fabricate a person's name. Use a role such as GDIT Program Director or NIWC Cybersecurity Lead when a verified person is unavailable.
+
+For each challenge, populate affected_market or mission_environment and black_duck_opening.
+For each opportunity, populate agency_or_customer, status, scope, appsec_need, black_duck_entry, motion, and confidence.
+For each partnership_framework item, populate subject_benefit, black_duck_benefit, and customer_outcome.
+For each meeting_agenda item, populate desired_output.
+For each executive_theme, populate why_it_matters.
+For each headwind_tailwind, populate joint_action.
+For each competitive_landscape item, populate entity_or_risk and differentiation_or_complementarity.
+
+If a required value cannot be verified, use UNVERIFIED or To be validated as appropriate, then provide a clearly labeled analysis or recommendation. Never emit undefined, null, fabricated people, or empty required fields.
 Use accurate, current information from authoritative public sources only when such source content is actually supplied to you or genuinely available through your execution environment. Do not claim that you searched the internet if you did not. Do not invent facts, relationships, contracts, quotations, customer needs, titles, values, dates, sources, or capabilities. Clearly distinguish Verified Fact, Analysis, Recommendation, Assumption, Prospective Opportunity, and Unresolved Question. Prioritize evidence published in the prior 12 months when available, but use older evidence for enduring contracts, organizational structures, acquisition vehicles, technologies, or strategic priorities. Every material fact, number, contract value, date, title, and quotation must have a direct source URL or be marked UNVERIFIED. Label opportunity entry points as analytical unless reliable evidence confirms Black Duck involvement.
 
 STEP 1 - DEFINE THE PARTNERSHIP OBJECTIVE
@@ -331,6 +839,18 @@ module.exports=function(app,db){
    audit.run(id,"2. Full prospective-client research (Boeing-derived 15-step framework)",FULL_CLIENT_FRAMEWORK,clientUser,JSON.stringify(clientResearch),model);
    audit.run(id,"3. Research reconciliation and semantic de-duplication",RECONCILIATION_FRAMEWORK,reconcileUser,JSON.stringify(combined),model);
    audit.run(id,"4. Research-informed call synthesis",CALL_FRAMEWORK,callUser,JSON.stringify(call),model);
+
+   const count = db.prepare(`
+    SELECT COUNT(*) AS n
+    FROM prep_query_audit
+    WHERE call_prep_id=?
+   `).get(id).n;
+
+   if(count !== 4){
+     throw new Error(
+       `Audit integrity failure. Expected 4 rows. Found ${count}.`
+     );
+   }
    res.json({id,model,result:call,partner_research:partnerResearch,client_research:clientResearch,combined_research:combined,frameworks:{partner:"Full GDIT-derived 18-step framework",client:"Full Boeing-derived 15-step framework",reconciliation:true}});
   }catch(error){res.status(500).json({error:error.message})}
  });
@@ -338,6 +858,12 @@ module.exports=function(app,db){
  app.delete("/api/prep-query-audit/:id",(req,res)=>{db.prepare("DELETE FROM prep_query_audit WHERE call_prep_id=?").run(req.params.id);res.json({success:true})});
  app.get("/api/research-frameworks",(req,res)=>res.json({partner:{name:"Full GDIT-derived public-sector partner-channel framework",steps:18,prompt:FULL_PARTNER_FRAMEWORK},client:{name:"Full Boeing-derived prospective-client framework",steps:15,prompt:FULL_CLIENT_FRAMEWORK},reconciliation:{name:"Research reconciliation and semantic de-duplication",prompt:RECONCILIATION_FRAMEWORK},call:{name:"Research-informed call synthesis",prompt:CALL_FRAMEWORK}}));
 };
+
+
+
+
+
+
 
 
 

@@ -1,3 +1,4 @@
+/* BLACKDUCK_UNIFIED_EVIDENCE_CLIENT_V21_1_2 */
 (function(){
   "use strict";
   const MARKER = "CONVERSATION_INTELLIGENCE_V18";
@@ -93,7 +94,7 @@
         if (!currentAnalysis || !currentAnalysis.marker) await analyze();
         if (!currentAnalysis || !currentAnalysis.marker) throw new Error('Analyze the conversation before saving.');
         const result = await api('/api/conversation-intelligence-v18/'+encodeURIComponent(id), {
-          method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+          method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ callPrepId: id,
             sourceText: root.querySelector('.ci18-source').value,
             engagementType: root.querySelector('.ci18-engagement').value,
             analysis: currentAnalysis,
